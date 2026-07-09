@@ -1,21 +1,21 @@
 July 8th, 2026
 
-I think Micron will go up a a lot, maybe 4x from ~1000 right now to at least 4000 by end of 2027 at the latest. 
+I think Micron will go up a lot, maybe 4x from ~1000 right now to at least 4000 by end of 2027 at the latest. 
 
 If it hits 4000 by Summer 2027 that will be on a then-current PE of ~24, which is, by most measures, very very reasonable. 
 
 ## Why
 I think Micron's forward PE of ~6 is because people are getting skittish about AI and think this is "another memory cycle". I don't.
 
-People are treating this like every other supply driven memory cycle, but I don't think are seeing the clear picture:
+People are treating this like every other supply driven memory cycle, but I don't think they are seeing the clear picture:
 
 1. This is demand driven, and demand is slated to keep going up.
 2. Supply can only increase as fast as ASML EUV machines can become available to memory makers (or TSM or other fabs can rotate into higher margin memory from logic chips.)
-3. Nvdia GPUs are doubling ram capacity every few years.  HBM demand increases faster than compute demand increases.
-4. Micron and other leadership are making observations about how far out their supply is fully contracted/bought-out, and when new fab capacity could come online (late '27/ '28. 
+3. Nvidia GPUs are doubling ram capacity every few years.  HBM demand increases faster than compute demand increases.
+4. Micron and other leadership are making observations about how far out their supply is fully contracted/bought-out, and when new fab capacity could come online (late '27/ '28). 
 	1. People have misconstrued this to say memory prices will "ease" in 2028. 
 	2. "People" are incorrect. This is not a logical argument. 
-	3. New fabs could slow the rate memory prices are increasing, but all projections indicate fab capacity wont be increasing as fast as demand will be increasing. This wont bring memory prices down, just slow their rise somewhat.
+	3. New fabs could slow the rate memory prices are increasing, but all projections indicate fab capacity won't be increasing as fast as demand will be increasing. This won't bring memory prices down, just slow their rise somewhat.
 	4. Memory leadership is correctly not making assumptions about future capacity they don't have locked up, but they are in no way claiming the shortage will only go into '27/'28. Each new earnings they have more quarters locked up and the backlog will keep growing. 
 	5. I don't see any chance the supply/demand curves get close anytime before the 2030s. I will try to show my models when I have a chance.
 	6. The important things to actually model are the two lines: 1. Memory bit demand and 2. Memory bit supply.
@@ -29,17 +29,18 @@ The other thing MU and the entire AI trade rests on is the idea that *compute de
 
 ### Aside 
 Another really insane fact that will have massive ramification across the AI economy is the crazy speed of tokens-per-watt or tokens-per-gpu increasing very fast. 
-Right now this doesn't fully mattter, because theres more compute demand than there are GPUs, so even A100s are viable.
+Right now this doesn't fully matter, because there's more compute demand than there are GPUs, so even A100s are viable.
 In the future, 6 year old GPUs will not be viable.
 
-This will be the case as long as Nvdia keeps getting big performance improvements, which will certainly fall off as Moore's law is dead and they are probably cashing in low hanging fruit right now that wont be there in 5 years. 
+This will be the case as long as Nvidia keeps getting big performance improvements, which will certainly fall off as Moore's law is dead and they are probably cashing in low hanging fruit right now that won't be there in 5 years. 
 
 | GPU  | Year | TFLOP/W |
 | ---- | ---- | ------- |
 | A100 | 2020 | ~0.8    |
 | B200 | 2024 | ~10     |
 | R100 | 2026 | ~20     |
-Unless energy is negligibly free, 6 year old GPUs can't stay viable in the future when there is a 20x performance gap we are not in a massive compute deficit. 
+
+Unless energy is negligibly free, 6 year old GPUs can't stay viable in the future when there is a 20x performance gap (and we are not in a massive compute deficit like we are in 2026).
 
 
 
