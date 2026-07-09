@@ -1,0 +1,237 @@
+{
+  "main": {
+    "id": "70ccb58ed8fc421d",
+    "type": "split",
+    "children": [
+      {
+        "id": "3b104dbc542e1c64",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "154f70393c46759c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Micron MU 2026 thesis.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Micron MU 2026 thesis"
+            }
+          },
+          {
+            "id": "1738d9cb77e141c4",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Micron MU 2026 thesis.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Micron MU 2026 thesis"
+            }
+          },
+          {
+            "id": "2c5ef5878eb5376b",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Micron MU 2026 thesis.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Micron MU 2026 thesis"
+            }
+          }
+        ],
+        "currentTab": 2
+      },
+      {
+        "id": "bbc394b14175c03c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "976d5c534e709783",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "00bafe33b6689103",
+    "type": "split",
+    "children": [
+      {
+        "id": "6d1ebd9784924f00",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b5bfcb6e3a01bf7a",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "7be4a419cf44eece",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "ac62640e985ad5d7",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "46d23dae6fd7fb8a",
+    "type": "split",
+    "children": [
+      {
+        "id": "4ca756378dc5b43b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a4d2f26a3aeb3bef",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Micron MU 2026 thesis.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Micron MU 2026 thesis"
+            }
+          },
+          {
+            "id": "f25a097c4d30ae5d",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Micron MU 2026 thesis.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Micron MU 2026 thesis"
+            }
+          },
+          {
+            "id": "108f87eba5a72aa5",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "70c0f0074396e8d0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "a5531e995bce6ab2",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Micron MU 2026 thesis.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Micron MU 2026 thesis"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "2c5ef5878eb5376b",
+  "lastOpenFiles": [
+    "hello world.md",
+    "Micron MU 2026 thesis.md",
+    "Welcome.md"
+  ]
+}
