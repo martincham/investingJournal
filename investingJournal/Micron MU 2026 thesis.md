@@ -48,3 +48,9 @@ Unless energy is negligibly free, 6 year old GPUs can't stay viable in the futur
 Most recent earnings MU CEO said "even as we expect industry supply to improve gradually in 2028", supply improving != supply-demand-gap shrinking.
 
 We might have visibility through 2028 by end of 2026 from Micron. Then perhaps people will finally believe that RAM relief won't come in 2028.  In the meantime I'm happy to buy at ~1k. The writing is on the wall and these are simple projections. 
+
+## In conclusion
+
+To be honest, I have no strong feeling about my supposed "price projection" at the beginning. I simply believe MU will continue to go up a lot. I don't know to where.
+
+# Finito
