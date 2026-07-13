@@ -1,0 +1,214 @@
+# D12-D19, D21-D23: non-AI demand -- the segments that get crowded out.
+#
+# IMPORTANT, and easy to get wrong: the GB/unit series below are TREND content, i.e.
+# what OEMs would fit at CONSTANT 2025 REAL PRICES. They are NOT the cut-down
+# configurations OEMs are actually shipping in 2026 while memory is unaffordable.
+#
+# That is the whole point of the demand line's definition (see 00-plan.md section 0).
+# Realised 2026 PC and phone content is being cut BECAUSE of the shortage -- that is
+# the shortage doing its work, not demand being absent. Feeding realised content back
+# in as "demand" would define the gap out of existence: the market always clears, so
+# a model built on realised shipments would show supply = demand forever and prove
+# nothing.
+
+servers_traditional:
+  units_millions:
+    value: {2018: 11.5, 2019: 11.0, 2020: 12.2, 2021: 13.1, 2022: 13.8, 2023: 11.9,
+            2024: 12.5, 2025: 13.2, 2026: 13.8, 2027: 14.3, 2028: 14.8, 2030: 15.6,
+            2032: 16.4}
+    unit: millions_of_units_per_year
+    source: DERIVED
+    confidence: low
+    notes: >
+      Non-AI servers. Flattish units; the growth is all in content. The 2023 dip is
+      real and load-bearing -- enterprise server units fell hard that year as budgets
+      rotated to AI, and it is part of why 2023 was a glut.
+  dram_gb_per_unit:
+    value: {2018: 315, 2020: 430, 2022: 600, 2024: 830, 2025: 1000, 2026: 1190,
+            2027: 1390, 2028: 1600, 2029: 1830, 2030: 2075, 2031: 2330, 2032: 2600}
+    unit: gigabytes
+    source: DERIVED
+    confidence: low
+    notes: >
+      Core counts keep climbing and each core wants its own memory channel capacity;
+      DDR5 -> MRDIMM extends this. THE LARGEST SINGLE DRAM POOL: server DRAM
+      (traditional + AI host) is ~35-40% of all DRAM bits, which is the cross-check
+      this series is calibrated against. Getting it too low was the model's first
+      calibration error -- it made 2025/26 look oversupplied when the market was in
+      fact in severe shortage.
+  nand_tb_per_unit:
+    value: {2018: 6, 2020: 9, 2022: 14, 2024: 20, 2025: 25, 2026: 29, 2028: 42,
+            2030: 57, 2032: 76}
+    unit: terabytes
+    source: DERIVED
+    confidence: low
+    notes: Enterprise SSD. Datacentre is the dominant NAND pool, not consumer.
+
+pc:
+  units_millions:
+    value: {2018: 259, 2019: 261, 2020: 302, 2021: 341, 2022: 292, 2023: 242,
+            2024: 263, 2025: 268, 2026: 262, 2027: 265, 2028: 268, 2030: 272,
+            2032: 276}
+    unit: millions_of_units_per_year
+    source: DERIVED
+    confidence: medium
+    notes: >
+      The COVID boom (341M in 2021) and the brutal hangover (242M in 2023) are both
+      real and both matter: smoothing them out was what stopped the backcast from
+      reproducing the 2023 glut. Win10 EOL pulled 2025 forward, hence the 2026 dip.
+  dram_gb_per_unit:
+    value: {2018: 7, 2020: 9, 2022: 12, 2024: 16, 2025: 20, 2026: 24, 2027: 28,
+            2028: 32, 2029: 36, 2030: 40, 2031: 44, 2032: 48}
+    unit: gigabytes
+    source: DERIVED
+    confidence: low
+    notes: >
+      TREND content. Copilot+ pushes a 16GB floor and AI PCs want 32GB. Note that
+      actual 2026 shipping configs are being CUT below this line as OEMs respond to
+      price -- that divergence is the gap made visible, and is exactly what we are
+      trying to measure rather than assume away.
+  nand_tb_per_unit:
+    value: {2018: 0.35, 2020: 0.5, 2022: 0.7, 2024: 0.9, 2025: 1.1, 2026: 1.3,
+            2028: 1.8, 2030: 2.4, 2032: 3.1}
+    unit: terabytes
+    source: DERIVED
+    confidence: low
+
+smartphone:
+  units_millions:
+    value: {2018: 1430, 2019: 1370, 2020: 1280, 2021: 1355, 2022: 1210, 2023: 1170,
+            2024: 1220, 2025: 1235, 2026: 1225, 2027: 1230, 2028: 1235, 2030: 1245,
+            2032: 1255}
+    unit: millions_of_units_per_year
+    source: DERIVED
+    confidence: medium
+    notes: Mature market. Flat units; content is the only growth vector.
+  dram_gb_per_unit:
+    value: {2018: 3.5, 2020: 5.0, 2022: 6.6, 2024: 7.6, 2025: 8.4, 2026: 9.6,
+            2027: 11.0, 2028: 12.5, 2029: 14.0, 2030: 15.5, 2031: 17.0, 2032: 18.5}
+    unit: gigabytes
+    source: DERIVED
+    confidence: low
+    notes: >
+      TREND content: on-device AI wants 12-16GB in a flagship. Again, realised 2026
+      content is being cut -- Chinese OEMs have publicly derated memory and raised
+      prices rather than eat the cost.
+  nand_tb_per_unit:
+    value: {2018: 0.07, 2020: 0.11, 2022: 0.15, 2024: 0.19, 2025: 0.22, 2026: 0.25,
+            2028: 0.32, 2030: 0.40, 2032: 0.49}
+    unit: terabytes
+    source: DERIVED
+    confidence: low
+
+graphics:
+  dram_eb_per_year:
+    value: {2018: 1.2, 2020: 1.6, 2022: 2.2, 2024: 2.6, 2025: 3.0, 2026: 3.4,
+            2027: 3.9, 2028: 4.4, 2029: 4.9, 2030: 5.4, 2031: 5.9, 2032: 6.4}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+    notes: >
+      GDDR7 for gaming/pro GPUs. Modelled directly in EB. Competes for the SAME
+      wafers as everything else -- and note AI now consumes GDDR too, which is part
+      of why "AI takes ~20% of DRAM wafer capacity in 2026" is larger than HBM alone.
+
+console:
+  dram_eb_per_year:
+    value: {2018: 0.5, 2020: 0.7, 2022: 0.5, 2024: 0.4, 2025: 0.4, 2026: 0.5,
+            2027: 0.9, 2028: 1.2, 2029: 1.1, 2030: 1.0, 2031: 0.9, 2032: 0.9}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+    notes: A real bit sink when PS6 / next Xbox land around 2027-28.
+
+automotive_industrial_iot:
+  dram_eb_per_year:
+    value: {2018: 0.7, 2020: 1.1, 2022: 1.7, 2024: 2.5, 2025: 3.0, 2026: 3.6,
+            2027: 4.3, 2028: 5.1, 2029: 6.0, 2030: 7.0, 2031: 8.1, 2032: 9.3}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+    notes: >
+      ADAS/L3, in-cabin, edge inference. Small but compounding, and price-INELASTIC:
+      automotive qualification cycles are years long, so these buyers pay up rather
+      than redesign. They do not get crowded out easily.
+  nand_eb_per_year:
+    value: {2018: 12, 2020: 20, 2022: 32, 2024: 48, 2025: 58, 2026: 70, 2028: 100,
+            2030: 140, 2032: 190}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+
+other_dram_eb_per_year:
+  value: {2018: 1.4, 2020: 1.7, 2022: 2.0, 2024: 2.3, 2025: 2.5, 2026: 2.7,
+          2028: 3.2, 2030: 3.7, 2032: 4.2}
+  unit: exabytes_per_year
+  source: DERIVED
+  confidence: low
+  notes: Networking, set-top, legacy DDR4 niches, distribution channel.
+
+other_nand_eb_per_year:
+  value: {2018: 90, 2020: 130, 2022: 175, 2024: 215, 2025: 240, 2026: 265,
+          2028: 320, 2030: 380, 2032: 445}
+  unit: exabytes_per_year
+  source: DERIVED
+  confidence: low
+  notes: Retail cards/UFDs, surveillance, consumer SSD channel.
+
+# D19. Only visible at quarterly resolution. Consumer builds ahead of holiday, so
+# Q3/Q4 pull bits forward; Q1 is the hangover. Multipliers average to 1.0 over a year.
+seasonality:
+  consumer_quarterly_multiplier:
+    value: {1: 0.92, 2: 0.98, 3: 1.08, 4: 1.02}
+    unit: multiplier
+    source: DERIVED
+    confidence: medium
+    notes: Applied to PC, smartphone, console and graphics only. Datacenter does not
+      have a holiday season.
+
+# S30. INVENTORY. A stock, not a flow -- and the mechanism without which the backcast
+# simply does not work.
+#
+# Customers and the channel buy ahead when they are frightened and stop buying when
+# they are full. That swing is a real component of demand in any given quarter, and it
+# is what actually drives the memory cycle's amplitude. Positive = restocking (adds to
+# demand). Negative = destocking (subtracts).
+#
+# The model was built without this at first, and the 2018-2025 backcast promptly
+# showed 2019 and 2023 as SHORTAGES when both were historic gluts. That failure is
+# what this series exists to fix, and it is the reason the backcast is worth running:
+# a model that cannot reproduce the crashes has no business projecting the shortages.
+inventory_swing:
+  dram_eb_per_year:
+    value: {2018: 1.0, 2019: -4.5, 2020: -1.0, 2021: 3.5, 2022: -4.0, 2023: -7.5,
+            2024: -1.5, 2025: 0.5, 2026: 1.5, 2027: 1.0, 2028: 0.0, 2029: 0.0,
+            2030: 0.0, 2031: 0.0, 2032: 0.0}
+    unit: exabytes_per_year
+    source: https://www.trendforce.com/presscenter/news/20251126-12802.html
+    confidence: medium
+    notes: >
+      The cycle, made explicit. 2018 hoarding into the price peak; the 2019 destock;
+      2021 double-ordering during the chip crisis; the great 2022-23 destock that
+      produced the worst glut in the industry's history; and the 2024-25 drawdown that
+      leaves suppliers' inventories "almost depleted" (TrendForce, Nov 2025) with
+      nothing left to cushion 2026.
+      Held at ZERO from 2028 -- projecting a restocking cycle would be inventing a
+      demand signal, and it would flatter the gap. The out-year result should not
+      depend on it.
+  nand_eb_per_year:
+    value: {2018: 20, 2019: -60, 2020: -20, 2021: 70, 2022: -100, 2023: -120,
+            2024: -30, 2025: 10, 2026: 30, 2027: 20, 2028: 0.0, 2030: 0.0, 2032: 0.0}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+    notes: Same cycle, same logic, NAND's larger bit scale.
+
+# D22. A genuine bear lever: pooling raises utilisation of ALREADY-INSTALLED DRAM,
+# which reduces demand for NEW DRAM. Cuts against the shortage thesis.
+cxl_pooling_savings:
+  value: {2025: 0.00, 2026: 0.01, 2027: 0.02, 2028: 0.035, 2029: 0.05, 2030: 0.065,
+          2031: 0.08, 2032: 0.09}
+  unit: fraction_of_server_dram_demand_avoided
+  source: DERIVED
+  confidence: speculative
+  notes: Applied to server DRAM demand (traditional + AI host).

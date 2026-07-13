@@ -1,0 +1,122 @@
+# Scenarios. Neutrally named -- these are states of the world, not opinions about
+# whether a shortage is good or bad for anyone's book.
+#
+#   TIGHT   = the gap is wider and lasts longer
+#   CENTRAL = the assumption files as written
+#   LOOSE   = the gap closes early
+#
+# Each override is applied to a dotted assumption path as either:
+#   mult: <float>   scale the value (works on scalars and on year-anchored series)
+#   set:  <value>   replace the value outright
+#
+# The Loose case is deliberately not a strawman. If the model cannot be made to close
+# the gap under plausible inputs, that is worth knowing -- and if it CAN, the inputs
+# that do it are the ones to watch.
+
+central:
+  description: The assumption files as written. No overrides.
+  overrides: {}
+
+tight:
+  description: >
+    Supply disappoints and AI demand does not deflate. HBM4's wafer penalty gets
+    worse than expected, DRAM density scaling stalls harder, the efficiency deflator
+    disappoints, 3D DRAM slips past the horizon, and the industry takes one
+    production-disrupting accident.
+  overrides:
+    tech_roadmap.hbm_trade_ratio: {mult: 1.12}
+    tech_roadmap.dram_gb_per_wafer: {mult: 0.95}
+    tech_roadmap.three_d_dram.first_volume_year: {set: 2033}
+    demand_ai.efficiency_deflator_annual: {mult: 0.5}
+    demand_ai.hbm_gb_per_accelerator: {mult: 1.15}
+    supply_capacity.disruption_haircut: {set: {2018: 0.0, 2026: 0.0, 2028: 0.03, 2032: 0.03}}
+    demand_conventional.cxl_pooling_savings: {mult: 0.4}
+
+loose:
+  description: >
+    The bear case for the shortage, and the one that deserves the most attention
+    because it is the one that would end it. AI memory efficiency compounds hard
+    (FP4 everywhere, aggressive KV compression), 3D DRAM lands early, the capex
+    response overshoots, CXL pooling bites, and HBM4's wafer penalty comes in better
+    than feared. Note what it takes: essentially EVERY lever has to break the same
+    way. That is the real question the model asks.
+  overrides:
+    tech_roadmap.hbm_trade_ratio: {mult: 0.88}
+    tech_roadmap.dram_gb_per_wafer: {mult: 1.06}
+    tech_roadmap.three_d_dram.first_volume_year: {set: 2029}
+    demand_ai.efficiency_deflator_annual: {mult: 1.8}
+    demand_ai.accelerator_units_millions: {mult: 0.80}
+    demand_ai.hbm_gb_per_accelerator: {mult: 0.90}
+    supply_capacity.dram_wafer_capacity_kwspm.samsung: {mult: 1.10}
+    supply_capacity.dram_wafer_capacity_kwspm.sk_hynix: {mult: 1.10}
+    supply_capacity.dram_wafer_capacity_kwspm.micron: {mult: 1.10}
+    demand_conventional.cxl_pooling_savings: {mult: 2.0}
+
+# Variables exposed as sliders in the interactive HTML. These are the model's ~12
+# load-bearing inputs -- the ones where a reasonable person could disagree and change
+# the answer. Everything else is either well-sourced or doesn't move the needle.
+sliders:
+  - path: tech_roadmap.hbm_trade_ratio
+    label: HBM wafer trade-ratio (k)
+    min: 0.7
+    max: 1.3
+    help: >
+      Wafer capacity an HBM bit costs vs a DDR5 bit. Derived at 2.85x for 2026 from
+      two sourced ratios (HBM = 22% of wafers but 9% of bits). Highest-leverage input
+      in the supply model.
+  - path: demand_ai.efficiency_deflator_annual
+    label: AI memory-efficiency deflator
+    min: 0.0
+    max: 3.0
+    help: >
+      Annual fall in bits per unit of delivered intelligence (quantisation, MoE, KV
+      compression). The largest single force that could close the gap without a
+      single new fab. Move this first if you want to break the result.
+  - path: demand_ai.accelerator_units_millions
+    label: AI accelerator units
+    min: 0.5
+    max: 1.6
+  - path: demand_ai.hbm_gb_per_accelerator
+    label: HBM GB per accelerator
+    min: 0.6
+    max: 1.6
+  - path: tech_roadmap.dram_gb_per_wafer
+    label: DRAM bits per wafer (density)
+    min: 0.85
+    max: 1.20
+  - path: tech_roadmap.hbm_wafer_share
+    label: Share of DRAM wafers given to HBM
+    min: 0.5
+    max: 1.5
+  - path: supply_capacity.dram_wafer_capacity_kwspm.cxmt
+    label: CXMT wafer capacity
+    min: 0.4
+    max: 1.8
+    help: >
+      Note the model's structural claim: because Chinese output is captive to Chinese
+      demand, moving this slider should barely move the GLOBAL gap. It moves the
+      addressable/ex-China line instead.
+  - path: china.captive_share
+    label: China captive share
+    min: 0.0
+    max: 1.0
+    absolute: true
+    help: >
+      1.0 = CXMT output fully absorbed domestically. Drop it and watch the global gap
+      NOT move -- exports are reallocation, not new bits.
+  - path: constraints.advanced_packaging.cowos_wafers_kwpm
+    label: TSMC CoWoS capacity
+    min: 0.6
+    max: 1.5
+  - path: constraints.hbm_backend.max_hbm_bits_eb_per_year
+    label: HBM back-end capacity
+    min: 0.6
+    max: 1.5
+  - path: demand_conventional.cxl_pooling_savings
+    label: CXL memory pooling savings
+    min: 0.0
+    max: 3.0
+  - path: demand_ai.power_ceiling.new_ai_datacenter_gw_per_year
+    label: New AI datacentre power per year
+    min: 0.5
+    max: 1.6

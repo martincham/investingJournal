@@ -1,0 +1,195 @@
+# D1-D11 + D20: AI/datacenter demand, and the efficiency deflator that fights it.
+
+# D1. All AI accelerators, not just Nvidia: Nvidia (Blackwell/Rubin), Google TPU,
+# AWS Trainium, AMD MI4xx, Meta MTIA, MSFT Maia, Huawei Ascend.
+accelerator_units_millions:
+  value: {2018: 0.3, 2020: 1.0, 2022: 2.5, 2023: 4.0, 2024: 8.0, 2025: 15.0,
+          2026: 18.0, 2027: 23.0, 2028: 28.0, 2029: 33.0, 2030: 38.0,
+          2031: 42.0, 2032: 46.0}
+  unit: millions_of_units_per_year
+  source: https://www.trendforce.com/presscenter/news/20260408-13003.html
+  confidence: low
+  notes: >
+    Includes inference ASICs, which is why the count is much larger than "Nvidia
+    high-end GPUs". Cross-checked two ways in the model: against hyperscaler capex
+    (top-down) and against the datacenter power ceiling. Blackwell is >70% of
+    Nvidia's high-end mix in 2026 with Rubin delayed, which is why HBM GB/unit steps
+    up in 2027 rather than 2026.
+
+# D2. The engine. Content per accelerator compounds ON TOP OF unit growth.
+# H100 80GB -> H200 141 -> B200 192 -> GB300 288 -> Rubin 288 (HBM4) -> Rubin Ultra ~1TB.
+# The series below is BLENDED across the whole accelerator mix, so it sits below the
+# flagship numbers -- inference ASICs carry far less HBM than a training flagship.
+hbm_gb_per_accelerator:
+  value: {2018: 16, 2020: 32, 2022: 64, 2023: 80, 2024: 130, 2025: 240, 2026: 280,
+          2027: 330, 2028: 410, 2029: 500, 2030: 610, 2031: 730, 2032: 880}
+  unit: gigabytes
+  source: https://blog.barrack.ai/nvidia-rubin-specs-architecture-2026/
+  confidence: medium
+  notes: >
+    Rubin ships 288GB HBM4 across 8 stacks; B200 carries 192GB HBM3E; GB300 288GB.
+    Roughly a doubling every 3 years -- the mechanism behind "HBM demand grows faster
+    than compute demand".
+    CALIBRATED UPWARD (250 -> 280 for 2026) against a hard fact: HBM is sold out. The
+    first pass had HBM demand ~20% BELOW HBM supply, which cannot be true of a product
+    that is fully allocated. GB300 at 288GB is the volume part in 2026, so a 250GB blend
+    was too conservative.
+    MUST STAY IN SYNC with the hbm_gb column of gpu_fleet.yaml:vintages -- a test
+    asserts this. The fleet decides HOW MANY accelerators ship; this decides how much
+    memory each one carries. Two files, one number.
+
+# D4. The underrated one. AI servers are full of NON-HBM DRAM: a Grace CPU carries
+# ~480GB of LPDDR5X, and an AI rack carries terabytes of DDR5 besides its HBM. AI
+# pulls commodity DRAM, not just HBM -- so you cannot escape the squeeze by buying
+# a server that has no HBM in it.
+conventional_dram_gb_per_accelerator:
+  value: {2020: 60, 2022: 90, 2024: 120, 2025: 150, 2026: 175, 2027: 200,
+          2028: 230, 2029: 260, 2030: 290, 2031: 320, 2032: 350}
+  unit: gigabytes
+  source: DERIVED
+  confidence: low
+  notes: Host DDR5/LPDDR5X (SOCAMM/LPCAMM) per accelerator, incl. CPU-side memory.
+
+# D8. AI NAND pull: QLC eSSD for data lakes, checkpointing, KV-cache offload.
+nand_tb_per_accelerator:
+  value: {2020: 2.0, 2022: 3.5, 2024: 6.0, 2025: 8.0, 2026: 10.0, 2027: 12.5,
+          2028: 15.0, 2029: 18.0, 2030: 21.0, 2031: 24.0, 2032: 28.0}
+  unit: terabytes
+  source: DERIVED
+  confidence: low
+  notes: 122TB/245TB-class QLC drives. NAND is no longer a consumer story.
+
+# D6. KV-cache sub-model. Cashes out "token demand is real" into actual bytes.
+#
+# An honest note on what this shows: the KV working set is a strong reason HBM PER
+# ACCELERATOR must keep rising (it is what forces 288GB and then 1TB packages), but
+# at global aggregate it is a small number of exabytes -- model weights and batch
+# activations dominate the HBM footprint. So this is modelled as (a) a cross-check on
+# the accelerator-derived HBM number and (b) a driver of the DRAM/NAND OFFLOAD tiers,
+# which are additive. It is deliberately NOT added to HBM demand, which would
+# double-count against hbm_gb_per_accelerator.
+kv_cache:
+  tokens_served_trillions:
+    value: {2023: 30, 2024: 150, 2025: 500, 2026: 1500, 2027: 3200, 2028: 6000,
+            2029: 10000, 2030: 16000, 2031: 23000, 2032: 32000}
+    unit: trillions_of_tokens_per_year
+    source: DERIVED
+    confidence: speculative
+    notes: Reasoning and agentic workloads consume far more tokens per user-visible task.
+  peak_concurrent_sessions_millions:
+    value: {2024: 2.0, 2025: 5.0, 2026: 12.0, 2027: 22.0, 2028: 36.0, 2029: 52.0,
+            2030: 70.0, 2031: 88.0, 2032: 108.0}
+    unit: millions
+    source: DERIVED
+    confidence: speculative
+  avg_active_context_tokens:
+    value: {2024: 4000, 2025: 8000, 2026: 16000, 2027: 32000, 2028: 55000,
+            2029: 85000, 2030: 120000, 2031: 160000, 2032: 210000}
+    unit: tokens
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      The superlinear term. Long-context + agentic + reasoning blow this up, and KV
+      cache scales linearly with it per session. This is the strongest structural
+      argument for memory demand -- and the most uncertain input in the file.
+  kv_kb_per_token:
+    value: {2024: 300, 2025: 200, 2026: 120, 2027: 80, 2028: 55, 2029: 40,
+            2030: 30, 2031: 24, 2032: 20}
+    unit: kilobytes
+    source: DERIVED
+    confidence: low
+    notes: >
+      Falling fast, and this is the counterweight: GQA, MLA, quantised KV and
+      cache compression are cutting bytes-per-token faster than context length is
+      growing in some years. A raw 70B-class model with GQA is ~300KB/token; the
+      architectural response to long context has been to attack exactly this number.
+  offload_to_dram_share:
+    value: {2025: 0.15, 2028: 0.30, 2032: 0.40}
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+    notes: KV spilled from HBM to CXL-attached / host DRAM. Additive DRAM demand.
+  offload_to_nand_share:
+    value: {2025: 0.25, 2028: 0.45, 2032: 0.60}
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+
+# D20. THE BEAR CASE. The largest single downward force on AI memory demand.
+#
+# Bits per unit of delivered intelligence are falling: quantisation (FP16 -> FP8 ->
+# FP4 is a straight 4x cut), MoE sparsity, KV-cache compression, PagedAttention,
+# speculative decoding, distillation. If this runs faster than content growth, AI
+# demand flattens and the gap closes with no new fab required.
+#
+# It is applied as a cumulative annual haircut to AI DRAM+HBM demand.
+efficiency_deflator_annual:
+  value: {2024: 0.10, 2025: 0.12, 2026: 0.12, 2027: 0.10, 2028: 0.09, 2029: 0.08,
+          2030: 0.07, 2031: 0.06, 2032: 0.06}
+  unit: fraction_reduction_per_year
+  source: DERIVED
+  confidence: speculative
+  notes: >
+    ~10-12%/yr now, decaying as the easy wins are taken (you can only quantise to
+    FP4 once). Deliberately NOT set to zero: a model that assumes AI memory
+    efficiency never improves is not a model, it is an advertisement. This is the
+    first slider to move if you want to try to break the result.
+
+# D9. Top-down cross-check on D1 x D2. If bottom-up and top-down disagree by >20%,
+# the model says so rather than quietly picking one.
+hyperscaler_capex_usd_bn:
+  value: {2023: 150, 2024: 230, 2025: 400, 2026: 620, 2027: 850, 2028: 1100,
+          2029: 1320, 2030: 1520, 2031: 1710, 2032: 1900}
+  unit: billions_usd_per_year
+  source: DERIVED
+  confidence: low
+  notes: >
+    MSFT, GOOG, AMZN, META, ORCL, xAI, OpenAI/Stargate, plus neoclouds.
+    RECONCILED: the first version of this series topped out at $1,350bn and could only
+    fund ~26M accelerators in 2032 against a bottom-up build of ~46M -- an 85%
+    divergence that the cross-check caught. Rather than paper over it, the capex path
+    was raised to what the unit build actually costs (36M units x ~$21k ASP = ~$760bn
+    of accelerators at a ~40% share of capex implies ~$1.9tn). Accelerator units are
+    better-grounded than a guessed capex number, so capex moved. If you think ~$1.9tn
+    of annual AI capex in 2032 is absurd, then the accelerator count is too high and
+    the demand line is overstated -- that is the honest reading, and it is exactly
+    what this cross-check exists to expose.
+accelerator_share_of_capex:
+  value: {2024: 0.40, 2026: 0.45, 2028: 0.44, 2030: 0.42, 2032: 0.40}
+  unit: fraction
+  source: DERIVED
+  confidence: low
+avg_accelerator_asp_usd:
+  value: {2024: 12000, 2025: 14000, 2026: 15500, 2027: 16500, 2028: 17500,
+          2030: 19000, 2032: 21000}
+  unit: usd
+  source: DERIVED
+  confidence: low
+  notes: Blended across flagship GPUs and much cheaper inference ASICs.
+
+# D10. The hard physical ceiling. You cannot deploy an accelerator you cannot power.
+power_ceiling:
+  new_ai_datacenter_gw_per_year:
+    value: {2024: 8, 2025: 16, 2026: 25, 2027: 33, 2028: 40, 2029: 46, 2030: 52,
+            2031: 57, 2032: 62}
+    unit: gigawatts_added_per_year
+    source: DERIVED
+    confidence: low
+    notes: >
+      Grid interconnect, turbines and transformers are the real limit on the AI
+      buildout. A legitimate demand-side brake, and one of the very few that is
+      genuinely physical rather than behavioural.
+      CALIBRATED so that it does NOT bind before ~2029: an earlier version capped 2026
+      at ~11M accelerators when the world is visibly deploying nearly twice that, which
+      would have silently deflated HBM demand below its own known supply. A ceiling
+      that binds in the past is not a ceiling, it is a bug.
+  kw_per_accelerator_all_in:
+    value: {2024: 0.9, 2026: 1.1, 2028: 1.3, 2030: 1.5, 2032: 1.7}
+    unit: kilowatts
+    source: DERIVED
+    confidence: low
+    notes: >
+      Chip power plus network, storage, cooling and PUE overhead -- BLENDED across the
+      whole accelerator mix. Far below a flagship training GPU (a GB300 is ~1.4kW of
+      silicon alone) because the unit count is dominated by inference ASICs drawing
+      400-800W. Using a flagship figure here is what made the ceiling bind in 2026.

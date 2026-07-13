@@ -1,0 +1,156 @@
+# GPU fleet: vintages, economic viability, retirement, and replacement demand.
+#
+# WHY THIS EXISTS
+#
+# Treating accelerator shipments as an exogenous series misses the largest single
+# source of future HBM demand: REPLACEMENT. When an old GPU is retired, it frees a watt
+# and a rack slot, and the chip that refills that slot carries several times more
+# memory. A retired A100 (80GB) replaced by a Rubin Ultra (1TB) is +944GB of HBM demand
+# for ZERO net growth in datacentre power.
+#
+# So the question "how much HBM does the world need" collapses into "when does a GPU
+# stop being worth the watt it occupies" -- which requires a model of the economic
+# viability of each generation. That is what this file is.
+#
+# THE TWO RETIREMENT MECHANISMS (the model takes whichever bites first):
+#
+#   1. CASH UNVIABILITY -- revenue from the chip's compute no longer covers the
+#      electricity and hosting cost of running it. This is the textbook rule, and on
+#      its own it retires GPUs very LATE, because electricity is cheap relative to the
+#      value of scarce compute.
+#
+#   2. POWER EVICTION -- the one that actually matters. When power is the binding
+#      constraint (and it is), the true cost of running an old GPU is not its
+#      electricity bill: it is the OUTPUT FOREGONE by not putting a frontier chip in
+#      that same watt. A chip delivering 2% of the frontier's work per watt gets
+#      evicted long before its electricity bill exceeds its revenue.
+#
+# Mechanism 2 is why "6-year-old GPUs will not be viable" can be true even while those
+# GPUs remain individually profitable to run. They are profitable, and they are still
+# not worth the watt. The model shows both dates and reports the difference.
+
+# ---------------------------------------------------------------------------
+# Vintages. Cohorts, not SKUs -- each year's shipments are one cohort with blended
+# characteristics across the whole accelerator mix (flagship GPUs AND inference ASICs,
+# which is why perf/W is below the flagship figure and kW is well below a GB300).
+# ---------------------------------------------------------------------------
+vintages:
+  2018: {tflops_per_watt: 0.30, kw_per_unit: 0.30, hbm_gb: 16,   dram_gb: 40}
+  2019: {tflops_per_watt: 0.40, kw_per_unit: 0.30, hbm_gb: 24,   dram_gb: 45}
+  2020: {tflops_per_watt: 0.80, kw_per_unit: 0.40, hbm_gb: 32,   dram_gb: 60}
+  2021: {tflops_per_watt: 1.10, kw_per_unit: 0.40, hbm_gb: 40,   dram_gb: 70}
+  2022: {tflops_per_watt: 1.60, kw_per_unit: 0.45, hbm_gb: 64,   dram_gb: 90}
+  2023: {tflops_per_watt: 3.00, kw_per_unit: 0.55, hbm_gb: 80,   dram_gb: 105}
+  2024: {tflops_per_watt: 5.00, kw_per_unit: 0.70, hbm_gb: 130,  dram_gb: 120}
+  2025: {tflops_per_watt: 10.0, kw_per_unit: 0.85, hbm_gb: 240,  dram_gb: 150}
+  2026: {tflops_per_watt: 14.0, kw_per_unit: 1.05, hbm_gb: 280,  dram_gb: 175}
+  2027: {tflops_per_watt: 20.0, kw_per_unit: 1.20, hbm_gb: 330,  dram_gb: 200}
+  2028: {tflops_per_watt: 27.0, kw_per_unit: 1.35, hbm_gb: 410,  dram_gb: 230}
+  2029: {tflops_per_watt: 34.0, kw_per_unit: 1.45, hbm_gb: 500,  dram_gb: 260}
+  2030: {tflops_per_watt: 41.0, kw_per_unit: 1.55, hbm_gb: 610,  dram_gb: 290}
+  2031: {tflops_per_watt: 48.0, kw_per_unit: 1.62, hbm_gb: 730,  dram_gb: 320}
+  2032: {tflops_per_watt: 55.0, kw_per_unit: 1.70, hbm_gb: 880,  dram_gb: 350}
+# The hbm_gb column MUST match demand_ai.yaml:hbm_gb_per_accelerator -- a test asserts
+# it. This table decides how many accelerators ship and when they die; that series
+# decides how much memory each one carries. Same number, two jobs, one source of truth.
+# Anchors for the perf/W column: A100 (2020) ~0.8 TFLOP/W, B200 (2024/25) ~10,
+# Rubin (2026/27) ~20. Those are the flagship figures; the blended cohort tracks them
+# with a lag because the unit count is dominated by cheaper, lower-power inference
+# parts. HBM GB anchors: H100 80GB, H200 141, B200 192, GB300 288, Rubin 288 (HBM4),
+# Rubin Ultra ~1TB-class.
+#
+# NOTE the flattening at the top: 0.8 -> 10 (2020-25) is 12x in five years; 27 -> 55
+# (2028-32) is 2x in four. Moore's law is over and the easy architectural wins (FP8,
+# FP4, sparsity) are one-time. If perf/W keeps compounding at the old rate instead,
+# old GPUs get evicted FASTER and replacement demand goes UP -- the slider covers it.
+
+economics:
+  revenue_per_tflop_year_usd:
+    value: {2020: 14.0, 2022: 11.0, 2023: 9.5, 2024: 8.5, 2025: 7.0, 2026: 5.6,
+            2027: 4.2, 2028: 3.2, 2029: 2.5, 2030: 2.0, 2031: 1.6, 2032: 1.3}
+    unit: usd_per_tflop_of_capacity_per_year
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      What a TFLOP of capacity earns in a year. Falls ~20-25%/yr: this is compute price
+      deflation -- the scarcity rent on AI compute bleeding away as supply catches up.
+      TODAY this number is HIGH, which is exactly why an A100 is still worth running in
+      2026 despite being 12x less efficient than the frontier. There is more compute
+      demand than there are GPUs, so even bad GPUs clear.
+      This series falling is the mechanism that eventually kills the old fleet. If AI
+      compute stays scarce (this series flat), old GPUs stay viable and replacement
+      demand collapses. That is a real bear case for memory and it is a slider.
+  utilisation:
+    value: 0.80
+    unit: fraction
+    source: DERIVED
+    confidence: low
+  electricity_usd_per_kwh:
+    value: {2024: 0.055, 2026: 0.070, 2028: 0.085, 2030: 0.095, 2032: 0.105}
+    unit: usd_per_kwh
+    source: DERIVED
+    confidence: low
+    notes: Rising -- the AI buildout is itself bidding up industrial power.
+  pue:
+    value: 1.25
+    unit: ratio
+    source: DERIVED
+    confidence: medium
+  hosting_usd_per_kw_year:
+    value: 220
+    unit: usd_per_kw_per_year
+    source: DERIVED
+    confidence: low
+    notes: Rack, cooling, network, staff. Excludes the cost of the chip itself.
+
+# ---------------------------------------------------------------------------
+# Power eviction. The rule that actually retires GPUs.
+# ---------------------------------------------------------------------------
+power_eviction:
+  efficiency_threshold:
+    value: 0.08
+    unit: fraction_of_frontier_perf_per_watt
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      A vintage is evicted when its perf/W falls below this fraction of the CURRENT
+      frontier's perf/W -- i.e. when the watt it occupies would do >12x more work under
+      a new chip.
+      CALIBRATED against a known fact: A100s (2020, 0.8 TFLOP/W) are STILL being run
+      profitably in 2026. At 0.08 the 2020 vintage survives until the frontier passes
+      10 TFLOP/W, which is 2025/26 -- so the model retires it right about now, which is
+      the observable answer. A tighter threshold (0.12) killed it in 2025Q1, which is
+      contradicted by the fact that people are still renting A100s.
+      Set this to 0 and eviction never happens; the fleet then retires only on cash
+      grounds, which is 4-5 years later. The spread between those two dates is the whole
+      question, and the model reports both.
+  scarcity_trigger:
+    value: 0.90
+    unit: fraction_of_available_power_in_use
+    source: DERIVED
+    confidence: low
+    notes: >
+      Eviction only applies when power is actually SCARCE. If the fleet is using less
+      than 90% of available power, there is no opportunity cost to an idle-ish old GPU
+      and it is allowed to keep running until it is cash-unviable. This is what makes
+      the mechanism honest rather than an assumption: it turns itself on only in the
+      world where the constraint is real.
+  retirement_ramp_quarters:
+    value: 8
+    unit: quarters
+    source: DERIVED
+    confidence: low
+    notes: >
+      A cohort is decommissioned over about two years, not overnight -- contracts run
+      out at different times, halls are re-fitted one at a time, and some customers hang
+      on. At 4 quarters the model produced an implausible sawtooth: whole vintages
+      vanishing in a year, replacement demand spiking to 10% and back to 0%. Real fleets
+      bleed out; they do not fall off a cliff.
+
+max_life_years:
+  value: 8
+  unit: years
+  source: DERIVED
+  confidence: low
+  notes: Hard cap. Beyond this, hardware failure and lack of driver/firmware support
+    retire the fleet regardless of economics.

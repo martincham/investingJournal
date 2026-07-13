@@ -1,0 +1,155 @@
+# S1-S8: Installed wafer capacity, fab pipeline, utilisation.
+#
+# Capacity is given as year anchors in kWSPM (thousand 300mm wafer starts per month)
+# and interpolated onto quarters by model/calendar.py:interpolate_annual. Greenfield
+# fabs are NOT step functions -- the interpolation plus the S-curve ramp in
+# calendar.py is what spreads a new fab's output across the 12-16 quarters it
+# actually takes to go from first output to full volume.
+#
+# 2025 anchor totals (DRAM): Samsung 720 + SK 595 + Micron 385 + CXMT 265 + other 75
+#                            = 2,040 kWSPM. This is the load-bearing base year.
+
+dram_wafer_capacity_kwspm:
+  samsung:
+    value: {2018: 430, 2020: 470, 2022: 550, 2024: 640, 2025: 720, 2026: 780,
+            2027: 840, 2028: 900, 2030: 1000, 2032: 1080}
+    unit: kwspm
+    source: https://semiconductorx.com/fabs-dram.php
+    confidence: medium
+    notes: >
+      ~720 kWSPM end-2025. P4/P5 Pyeongtaek phases drive the out-years. Samsung can
+      shift P-line capacity between foundry and DRAM (S4), which makes these the
+      widest error bars of the big three -- the out-years are the model's assumption,
+      not Samsung's guidance.
+
+  sk_hynix:
+    value: {2018: 340, 2020: 380, 2022: 420, 2024: 500, 2025: 595, 2026: 620,
+            2027: 670, 2028: 720, 2030: 820, 2032: 900}
+    unit: kwspm
+    source: https://x.com/Jukanlosreve/status/1973531213295190294
+    confidence: medium
+    notes: >
+      SK Hynix guided DRAM wafer input to the 600k/month range in 2H2026 (~620).
+      M15X Cheongju is the near-term add; the Yongin cluster's first fab is the
+      2027-28 step. Highest HBM mix of any producer.
+
+  micron:
+    value: {2018: 300, 2020: 330, 2022: 350, 2024: 365, 2025: 385, 2026: 420,
+            2027: 470, 2028: 520, 2030: 640, 2032: 720}
+    unit: kwspm
+    source: https://www.trendforce.com/presscenter/news/20251113-12780.html
+    confidence: medium
+    notes: >
+      TrendForce notes Micron is "waiting for its new ID1 fab" to come online -- i.e.
+      Micron adds almost nothing in 2026 and its step-up is a 2027/28 event (Boise
+      ID1 then ID2, plus Hiroshima). Clay NY is 2030+. This lag is exactly the
+      "new fab capacity late-27/28" point in the thesis, and it is why the supply
+      line cannot bend before then no matter what capex does.
+
+  cxmt:
+    value: {2018: 0, 2020: 40, 2022: 100, 2024: 200, 2025: 265, 2026: 350,
+            2027: 420, 2028: 500, 2030: 620, 2032: 700}
+    unit: kwspm
+    source: https://newsletter.semianalysis.com/p/chinas-cxmt-is-set-to-challenge-dram
+    confidence: medium
+    notes: >
+      ~265 kWSPM end-2025 -> ~350 end-2026 -> ~420 in 2027 -> ~500 by 2028 (~17% of
+      global DRAM capacity). NOTE: per china.yaml this output is treated as CAPTIVE to
+      Chinese domestic demand. It raises global supply and global demand by the same
+      amount and therefore does not close the global gap. No EUV access (export
+      controls) forces DUV multipatterning, which is why its bit output per wafer is
+      well below the leading edge -- see tech_roadmap.cxmt_density_discount.
+
+  other:
+    value: {2018: 130, 2020: 110, 2022: 95, 2024: 82, 2025: 75, 2026: 72,
+            2028: 68, 2030: 62, 2032: 58}
+    unit: kwspm
+    source: https://en.unibetter-ic.com/top-dram-manufacturers/
+    confidence: low
+    notes: Nanya, Winbond, PSMC. Niche/legacy DRAM, slowly shrinking.
+
+nand_wafer_capacity_kwspm:
+  samsung:
+    value: {2018: 380, 2020: 420, 2022: 450, 2024: 430, 2025: 450, 2026: 480,
+            2028: 540, 2030: 600, 2032: 650}
+    unit: kwspm
+    source: https://www.isaiahresearch.com/Insight/Detail/105
+    confidence: low
+  sk_hynix_solidigm:
+    value: {2018: 240, 2020: 280, 2022: 330, 2024: 300, 2025: 320, 2026: 345,
+            2028: 400, 2030: 450, 2032: 490}
+    unit: kwspm
+    source: https://www.isaiahresearch.com/Insight/Detail/105
+    confidence: low
+  kioxia_sandisk:
+    value: {2018: 330, 2020: 360, 2022: 400, 2024: 360, 2025: 380, 2026: 405,
+            2028: 460, 2030: 520, 2032: 560}
+    unit: kwspm
+    source: https://www.isaiahresearch.com/Insight/Detail/105
+    confidence: low
+    notes: Kitakami K2 is the main add.
+  micron:
+    value: {2018: 150, 2020: 165, 2022: 180, 2024: 170, 2025: 180, 2026: 195,
+            2028: 225, 2030: 255, 2032: 275}
+    unit: kwspm
+    source: https://www.isaiahresearch.com/Insight/Detail/105
+    confidence: low
+  ymtc:
+    value: {2018: 20, 2020: 60, 2022: 100, 2024: 115, 2025: 130, 2026: 155,
+            2028: 200, 2030: 240, 2032: 270}
+    unit: kwspm
+    source: https://www.isaiahresearch.com/Insight/Detail/105
+    confidence: low
+    notes: Also treated as captive-China per china.yaml.
+
+utilisation:
+  dram:
+    value: {2018: 0.97, 2019: 0.88, 2020: 0.92, 2021: 0.97, 2022: 0.90,
+            2023: 0.76, 2024: 0.93, 2025: 0.95, 2026: 0.97, 2028: 0.97, 2032: 0.96}
+    unit: fraction
+    source: https://www.trendforce.com/presscenter/news/20251113-12780.html
+    confidence: medium
+    notes: >
+      The 2023 trough (~0.76) is the deliberate industry-wide production cut that
+      ended the 2022-23 glut. It is the single most important thing the backcast has
+      to reproduce: a model that cannot show the 2023 cut has not understood that
+      memory supply is a decision, not just a physical ceiling. 2026+ is effectively
+      pinned at max -- in a shortage, everyone runs flat out.
+  nand:
+    value: {2018: 0.95, 2019: 0.85, 2020: 0.90, 2021: 0.95, 2022: 0.88,
+            2023: 0.70, 2024: 0.88, 2025: 0.93, 2026: 0.96, 2028: 0.96, 2032: 0.95}
+    unit: fraction
+    source: https://www.isaiahresearch.com/Insight/Detail/105
+    confidence: low
+
+# S3. The shrink tax. Migrating a line to a smaller node COSTS you wafer starts:
+# more process steps and more litho passes mean longer cycle time, so the same
+# toolset yields fewer wafer-outs per month. This is why bit growth is always less
+# than density growth, and it is routinely left out of naive models.
+node_conversion_loss:
+  dram:
+    value: {2018: 0.03, 2022: 0.04, 2025: 0.05, 2026: 0.06, 2028: 0.07, 2030: 0.08, 2032: 0.09}
+    unit: fraction_of_capacity_lost
+    source: DERIVED
+    confidence: low
+    notes: >
+      Rises over time because each successive DRAM node adds more steps for less
+      density. Calibrated so that 2026 net bit growth lands inside TrendForce's
+      guided 10-15% band given the wafer and density assumptions.
+  nand:
+    value: {2018: 0.02, 2025: 0.03, 2028: 0.04, 2032: 0.05}
+    unit: fraction_of_capacity_lost
+    source: DERIVED
+    confidence: low
+
+# S7. Stochastic disruption. Off by default; a scenario lever, not a forecast.
+disruption_haircut:
+  value: {2018: 0.0, 2032: 0.0}
+  unit: fraction
+  source: DERIVED
+  confidence: low
+  notes: >
+    Fire / earthquake / power-outage. Historically the industry loses a few percent
+    of a year's output to one of these roughly once every 3-4 years (Hsinchu 2021,
+    Xi'an 2021, Kioxia Yokkaichi 2019). Left at zero so the base case is not
+    quietly assuming an accident; raise it in the Tight scenario.

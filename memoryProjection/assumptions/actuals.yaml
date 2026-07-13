@@ -1,0 +1,189 @@
+# OBSERVED DATA through 2026Q2. Not model output.
+#
+# Everything here is either directly sourced or derived from two sourced numbers. The
+# model OVERRIDES its own computation with these values for every quarter up to
+# actuals_end, so the lines through 2026Q2 are reality, not a simulation of reality.
+# The uncertainty bands consequently have zero width up to that point.
+#
+# THE ONE THING THAT CANNOT BE PINNED: demand.
+# "Bits the world would consume at constant 2025 prices" is a COUNTERFACTUAL. It was
+# never observed and never can be -- what was observed is what actually cleared, at
+# 2026's prices, after rationing. So supply and the unit DRIVERS of demand (PC units,
+# phone units, accelerator units) are pinned to actuals; the demand LINE itself stays
+# a modelled construct even in the past. This is a property of the question, not a
+# shortcoming of the data.
+
+actuals_end:
+  value: 2026Q2
+  unit: quarter
+  source: USER_INPUT
+  confidence: high
+  notes: Last quarter with observed data. Everything after this is projection.
+
+# ---------------------------------------------------------------------------
+# DRAM industry revenue, quarterly. Hard numbers.
+# ---------------------------------------------------------------------------
+dram_industry_revenue_usd_bn:
+  value:
+    2025Q1: 27.0
+    2025Q2: 31.6
+    2025Q3: 41.4
+    2025Q4: 53.58
+    2026Q1: 97.0
+    2026Q2: 152.3
+  unit: billions_usd
+  source: https://www.trendforce.com/presscenter/news/20260226-12937.html
+  confidence: high
+  notes: >
+    4Q25 = $53.58bn (+29.4% QoQ) is directly reported. 3Q25 and 2Q25 are backed out of
+    the reported +29.4% and +30.9% QoQ chain. 1Q26 = $97.0bn from the reported +81% QoQ
+    ("Rapid Contract Price Surge Drives 1Q26 DRAM Industry Up 81% QoQ"), which
+    independently matches the separately-reported "$97 billion in Q1 2026" figure --
+    two sources, same number.
+    2026Q2 is PRELIMINARY: the quarter has only just closed. It applies TrendForce's
+    guided +58-63% Q2 contract price rise to roughly flat bits.
+
+# Blended realised ASP, QoQ. Contract prices are what get quoted; realised blended ASP
+# lags them (older contracts roll over gradually, and the mix shifts).
+dram_blended_asp_qoq:
+  value:
+    2025Q1: 0.02
+    2025Q2: 0.05
+    2025Q3: 0.20
+    2025Q4: 0.44
+    2026Q1: 0.80
+    2026Q2: 0.55
+  unit: fraction_qoq
+  source: https://www.trendforce.com/presscenter/news/20260226-12937.html
+  confidence: medium
+  notes: >
+    4Q25: conventional DRAM contract +45-50% QoQ, blended conventional+HBM +50-55%.
+    1Q26: contract prices up "as much as 98%". 2Q26: TrendForce guides +58-63%.
+    The values here are the REALISED blended figures, set a few points below the
+    headline contract numbers because realised ASP lags contract on the roll. This lag
+    is the one judgement call in this file, and it is calibrated so that the implied
+    bit series (revenue / ASP) reproduces TrendForce's independently-guided 10-15%
+    industry bit growth for 2026. Two sourced series pinning a third.
+
+# ---------------------------------------------------------------------------
+# DRAM bit supply, quarterly, EB. Derived: revenue / ASP index, level-anchored.
+# ---------------------------------------------------------------------------
+dram_supply_eb_per_quarter:
+  value:
+    2025Q1: 9.0
+    2025Q2: 9.6
+    2025Q3: 10.2
+    2025Q4: 10.2
+    2026Q1: 10.0
+    2026Q2: 10.8
+  unit: exabytes_per_quarter
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Quarterly industry bit shipments in EB are not published free of charge, so this is
+    derived from the two series above (revenue / realised ASP) and level-anchored to
+    ~39 EB for 2025 -- a level itself corroborated three independent ways: wafer
+    capacity x density; $122bn of 2025 DRAM revenue at a ~$2.9/GB blend; and Micron's
+    ~22% bit share against its own disclosed output.
+    The 2026Q1 DIP is real and is the single most informative data point in the file:
+    revenue rose 81% while bits FELL, because suppliers' inventories were "almost
+    depleted" (TrendForce) and they could no longer ship more than they made. That is
+    what a supply wall looks like in the data.
+    Corroboration: Micron reported DRAM bit shipments +~30% YoY over its first nine
+    months of FY2026 against ASP +~140% -- a bit-growth figure of that order is only
+    consistent with a low-single-digit-EB quarterly industry level like this one.
+
+nand_supply_eb_per_quarter:
+  value:
+    2025Q1: 340
+    2025Q2: 360
+    2025Q3: 380
+    2025Q4: 382
+    2026Q1: 370
+    2026Q2: 395
+  unit: exabytes_per_quarter
+  source: https://www.trendforce.com/presscenter/news/20260303-12943.html
+  confidence: low
+  notes: >
+    NAND revenue +26.7% QoQ in 4Q25 (top-5 suppliers $21.17bn, +23.8%); 1Q26 NAND
+    prices guided +85-90% QoQ. Bits derived the same way as DRAM and anchored to
+    ~1,460 EB for 2025.
+
+# ---------------------------------------------------------------------------
+# AI accelerator units, quarterly, millions. The demand driver.
+# ---------------------------------------------------------------------------
+accelerator_units_millions_per_quarter:
+  value:
+    2025Q1: 3.0
+    2025Q2: 3.3
+    2025Q3: 3.7
+    2025Q4: 4.0
+    2026Q1: 4.2
+    2026Q2: 4.5
+  unit: millions_of_units
+  source: https://www.sec.gov/Archives/edgar/data/0001045810/000104581026000051/q1fy27cfocommentary.htm
+  confidence: medium
+  notes: >
+    Anchored on NVIDIA's reported Data Center COMPUTE revenue (networking excluded, as
+    it buys no HBM): a record $60.4bn in the quarter ended 26 Apr 2026, +18% QoQ and
+    +77% YoY. At a ~$28k blended ASP that is ~2.2M NVIDIA accelerators in the quarter.
+    Grossed up for Google TPU, AWS Trainium, AMD MI-series, Meta MTIA, Microsoft Maia
+    and Huawei Ascend -- roughly 2x NVIDIA's unit count, since the merchant ASICs are
+    far cheaper per unit -- gives ~4.5M/quarter, i.e. ~18M/yr in 2026.
+    Note NVIDIA shipped NO Data Center Hopper to China in the quarter (vs $4.6bn a year
+    earlier), which is part of why Chinese domestic AI demand is served domestically --
+    see china.yaml.
+
+# ---------------------------------------------------------------------------
+# Conventional unit shipments, quarterly, millions. All directly reported.
+# ---------------------------------------------------------------------------
+pc_units_millions_per_quarter:
+  value:
+    2025Q1: 63.2
+    2025Q2: 68.4
+    2025Q3: 75.8
+    2025Q4: 68.0
+    2026Q1: 65.6
+    2026Q2: 66.5
+  unit: millions_of_units
+  source: https://counterpointresearch.com/en/insights/global-pc-shipments-q1-2026
+  confidence: high
+  notes: >
+    1Q26 = 65.6M, +3% YoY (IDC). Gartner says 62.8M (+4%), Counterpoint 63.3M (+3.2%);
+    IDC's figure is used and the others bracket it.
+    IMPORTANT for reading the demand line: IDC attributes the growth to PULL-FORWARD --
+    buyers accelerating purchases ahead of memory-driven price rises and shortages.
+    That is demand being dragged out of the future, not created. 2026Q2 is preliminary.
+
+smartphone_units_millions_per_quarter:
+  value:
+    2025Q1: 302.5
+    2025Q2: 295.0
+    2025Q3: 320.0
+    2025Q4: 331.0
+    2026Q1: 296.0
+    2026Q2: 288.0
+  unit: millions_of_units
+  source: https://www.fonearena.com/blog/480087/global-smartphone-shipments-q1-2026-idc.html
+  confidence: high
+  notes: >
+    1Q26: IDC says 293.8M (-2.9% YoY); Omdia says 298.5M (+1%). The 296M used here
+    splits them. IDC explicitly attributes the decline to MEMORY CONSTRAINTS, and both
+    firms note vendor front-loading ahead of component inflation.
+    This is the crowd-out happening in real time: phone makers cannot get the DRAM, so
+    they ship fewer phones and cut memory content in the ones they do ship. It is the
+    clearest observable evidence that the gap is real -- and it is also exactly why the
+    demand line must use TREND content rather than these rationed outcomes.
+
+server_units_millions_per_quarter:
+  value:
+    2025Q1: 3.1
+    2025Q2: 3.3
+    2025Q3: 3.4
+    2025Q4: 3.4
+    2026Q1: 3.3
+    2026Q2: 3.4
+  unit: millions_of_units
+  source: DERIVED
+  confidence: low
+  notes: Traditional (non-AI) servers. Not separately reported at this granularity.

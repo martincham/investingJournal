@@ -1,0 +1,144 @@
+# Uncertainty windows for everything after 2026Q2.
+#
+# Before 2026Q2 the lines are OBSERVED (see actuals.yaml) and the bands have zero width.
+# After it, every number is a guess, and the model should say so with a band rather than
+# a single confident line.
+#
+# Implementation: Monte Carlo over the load-bearing inputs. Each draw scales an input by
+# a lognormal multiplier whose spread GROWS WITH HORIZON -- a 2027 guess is much better
+# than a 2032 guess, and a band of constant width would be lying about that.
+#
+#     sigma(t) = sigma_2027 * sqrt(years_beyond_2026)
+#
+# The sqrt is the usual random-walk widening: errors accumulate but partially cancel.
+# It is a convention, not a law, and it is the reason these bands should be read as
+# "roughly how wrong could this be" rather than as calibrated probabilities.
+
+draws:
+  value: 400
+  unit: count
+  source: DERIVED
+  confidence: high
+  notes: Enough for stable P10/P50/P90 at this precision; the model is cheap to run.
+
+# Fractional 1-sigma spread at a 1-year horizon (2027). Widened by sqrt(horizon).
+# These are judgements about how well each thing is known, and they differ a lot:
+# wafer capacity is announced years ahead and is knowable; the AI efficiency deflator
+# is almost pure speculation.
+sigma_2027:
+  tech_roadmap.dram_gb_per_wafer:
+    value: 0.04
+    unit: fraction
+    source: DERIVED
+    confidence: medium
+    notes: >
+      Tight near-term (roadmaps are public and nodes are already in qualification) but
+      compounding: at a 6-year horizon this becomes ~10%, which is why it dominates the
+      band despite the small starting sigma. It is also the model's #1 sensitivity.
+  tech_roadmap.hbm_trade_ratio:
+    value: 0.06
+    unit: fraction
+    source: DERIVED
+    confidence: medium
+    notes: Anchored at 2.85x by two sourced ratios for 2026; the HBM4 trajectory is not.
+  tech_roadmap.hbm_wafer_share:
+    value: 0.08
+    unit: fraction
+    source: DERIVED
+    confidence: low
+    notes: A producer allocation decision. Behavioural, therefore genuinely uncertain.
+  supply_capacity.dram_wafer_capacity_kwspm.samsung:
+    value: 0.05
+    unit: fraction
+    source: DERIVED
+    confidence: medium
+  supply_capacity.dram_wafer_capacity_kwspm.sk_hynix:
+    value: 0.05
+    unit: fraction
+    source: DERIVED
+    confidence: medium
+  supply_capacity.dram_wafer_capacity_kwspm.micron:
+    value: 0.05
+    unit: fraction
+    source: DERIVED
+    confidence: medium
+  supply_capacity.dram_wafer_capacity_kwspm.cxmt:
+    value: 0.15
+    unit: fraction
+    source: DERIVED
+    confidence: low
+    notes: Wide. Nobody outside CXMT knows its real yield.
+  demand_ai.efficiency_deflator_annual:
+    value: 0.35
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      The widest band in the model, deliberately. Nobody knows how much further
+      bits-per-unit-of-intelligence can fall. FP4 is a one-time 4x; whether the next
+      4x exists is a research question, not a forecasting one.
+  demand_ai.hbm_gb_per_accelerator:
+    value: 0.08
+    unit: fraction
+    source: DERIVED
+    confidence: medium
+  datacenter.realisation_rate:
+    value: 0.18
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      How much of the announced AI buildout actually gets built. Very wide, because the
+      historical base rate for megaproject delivery is poor and the current announcement
+      pipeline is unprecedented.
+  datacenter.announced_gw_per_year:
+    value: 0.12
+    unit: fraction
+    source: DERIVED
+    confidence: low
+  gpu_fleet.economics.revenue_per_tflop_year_usd:
+    value: 0.22
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      Compute price deflation. Drives GPU retirement, hence replacement demand. If AI
+      compute stays scarce this stays high, old GPUs stay viable, and the replacement
+      stream -- a large slice of future HBM demand -- simply does not happen.
+  gpu_fleet.power_eviction.efficiency_threshold:
+    value: 0.30
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+    notes: When is a watt better spent on a new chip? Almost no empirical grounding.
+  demand_conventional.servers_traditional.dram_gb_per_unit:
+    value: 0.07
+    unit: fraction
+    source: DERIVED
+    confidence: low
+    notes: The largest single conventional DRAM pool, so its band matters.
+
+# Correlation. Drawing every input independently understates the tails badly: the world
+# where AI demand disappoints is the same world where the buildout stalls AND compute
+# gets cheap AND producers over-build. Those things move together.
+correlation:
+  ai_demand_cluster:
+    value: 0.55
+    unit: correlation
+    source: DERIVED
+    confidence: low
+    notes: >
+      Applied across the AI-facing inputs (efficiency deflator, HBM GB/accelerator,
+      datacentre realisation, announced GW, compute revenue/TFLOP). A single common
+      factor with this loading, plus idiosyncratic noise.
+      Without it the P10/P90 band is far too narrow, because 12 independent draws
+      average out. Memory cycles are precisely the phenomenon of everything going wrong
+      at once.
+  supply_cluster:
+    value: 0.45
+    unit: correlation
+    source: DERIVED
+    confidence: low
+    notes: >
+      Across the supply inputs (density, wafer capacity by producer). The big three
+      invest and shrink in lockstep -- that correlated behaviour IS the memory cycle.
