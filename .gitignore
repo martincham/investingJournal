@@ -1,0 +1,22 @@
+.claude/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+
+# Obsidian local workspace state
+investingJournal/.obsidian/workspace.json
+investingJournal/.obsidian/workspace-mobile.json

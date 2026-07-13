@@ -42,8 +42,9 @@ class DemandQuarter:
 
     # Diagnostics
     accelerators: float = 0.0
-    accelerators_before_power_cap: float = 0.0
-    power_capped: bool = False
+    modelled_accelerators: float = 0.0   # the fleet's number, before the actuals override
+    power_capped: bool = False           # power is what's stopping us buying more
+    binding_demand_constraint: str = ""  # capex | power | packaging
     efficiency_multiplier: float = 1.0
     kv_working_set_bits: float = 0.0
     capex_implied_accelerators: float = 0.0
@@ -126,13 +127,14 @@ def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter) -> DemandQuarter
     # The second term is replacement demand, and it is the piece an exogenous shipments
     # series cannot see. Retiring an A100 (80GB, 0.4kW) and refilling its watt with a
     # Rubin Ultra (~1TB, 1.45kW) is a large HBM purchase for ZERO net growth in power.
-    out.accelerators_before_power_cap = f.shipments
+    out.modelled_accelerators = f.shipments
     out.retirements = f.retirements
     out.replacement_share = f.replacement_share
     out.fleet_units = f.fleet_units
     out.fleet_power_gw = f.fleet_power_gw
     out.available_power_gw = f.available_power_gw
     out.power_capped = f.power_scarce
+    out.binding_demand_constraint = f.binding_demand_constraint
 
     # Through 2026Q2 the observed shipment count wins over the model's.
     accel_q = actuals.accelerator_units(a, q)

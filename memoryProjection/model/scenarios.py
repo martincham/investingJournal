@@ -72,8 +72,7 @@ def _apply_override(a: Assumptions, path: str, op: dict[str, Any]) -> None:
 
 def build_assumptions(scenario: str = "central", sliders: dict[str, float] | None = None) -> Assumptions:
     """Fresh assumption set with a scenario, then any slider multipliers, applied."""
-    base = config.load()
-    a = config.deep_copy(base)
+    a = config.load()  # already an independent copy; no second deep_copy needed
 
     spec = a.tree["scenarios"].get(scenario)
     if spec is None:

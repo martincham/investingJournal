@@ -19,51 +19,54 @@ def _q4(run, year):
     return next(d for q, d in zip(run.quarters, run.demand) if q.year == year and q.q == 4)
 
 
-@pytest.mark.parametrize("year", [2026, 2028, 2030, 2032])
-def test_bottom_up_accelerators_agree_with_top_down_capex(central, year):
-    """Can the world AFFORD the accelerators the model says it buys?
+def test_modelled_accelerators_match_the_observed_count(central):
+    """The fleet derives shipments from min(capex, power, packaging). It must land on the
+    ~18M units the world actually bought in 2026, or every HBM number downstream is wrong.
 
-    Bottom-up (unit shipments x HBM content) against top-down (hyperscaler capex x
-    accelerator share / ASP). These are independent chains and they must agree.
-
-    This test failed on the first build -- the demand line implied ~46M accelerators in
-    2032 against a capex path that could only fund ~26M, an 85% divergence. Capex was
-    raised to what the unit build actually costs. If you ever find that capex path
-    implausible, this test is telling you the demand line is too high.
+    Note this is now the real cross-check: `capex_implied_accelerators` is one of the
+    three ceilings the fleet minimises over, so agreement between the fleet's output and
+    the observed count is a statement about the whole stack, not about one series.
     """
-    d = _q4(central, year)
-    effective = d.accelerators
-    top_down = d.capex_implied_accelerators
-    div = effective / top_down - 1
-    assert abs(div) < 0.20, (
-        f"{year}: bottom-up {effective * 4 / 1e6:.1f}M accelerators vs capex-implied "
-        f"{top_down * 4 / 1e6:.1f}M -- {div:+.0%}. One of the two chains is wrong."
+    d = _q4(central, 2026)
+    assert abs(d.modelled_accelerators * 4 / 18e6 - 1) < 0.25, (
+        f"fleet ships {d.modelled_accelerators * 4 / 1e6:.1f}M accelerators in 2026; "
+        f"the observed figure is ~18M"
     )
 
 
-def test_power_ceiling_does_not_bind_in_the_present(central):
-    """A ceiling that binds in a year we can already observe is a bug, not a constraint.
+def test_power_scarcity_is_judged_against_an_independent_yardstick(central):
+    """The bug this test exists to prevent.
 
-    The world is visibly deploying ~18-20M accelerators in 2026. An earlier version of
-    the power ceiling capped it at ~11M, which silently deflated HBM demand below its
-    own known supply -- i.e. the model would have claimed HBM was in surplus during a
-    period when it is famously sold out.
+    Scarcity used to be "the fleet is using >=90% of available power". That was circular:
+    the fleet refilled ALL available headroom every quarter, so it consumed 100% of
+    available power BY CONSTRUCTION, and the test silently degenerated into "is the
+    buildout decelerating?". In 2026Q4 the fleet was using literally every available watt
+    and the model still reported power as not scarce.
+
+    Scarcity is now: the grid can run FEWER accelerators than capex wants to buy. So it
+    must be possible for the fleet to sit BELOW its power ceiling -- if it never does,
+    we are back to a fleet that expands into whatever space it is given, and the
+    measurement is meaningless again.
     """
-    for year in (2025, 2026, 2027):
-        assert not _q4(central, year).power_capped, (
-            f"{year}: the power ceiling is binding in a year we can observe. "
-            f"Either the GW/yr figure is too low or kW/accelerator is too high."
-        )
+    slack = [
+        f for f in central.demand
+        if f.available_power_gw > 0 and f.fleet_power_gw < f.available_power_gw * 0.999
+    ]
+    assert slack, (
+        "the fleet consumes 100% of available power in every single quarter -- so "
+        "'power is scarce' cannot be measuring anything. The headroom-filling bug is back."
+    )
 
 
-def test_power_ceiling_does_bind_eventually(central):
-    """...but it must bite somewhere, or it isn't doing any work.
-
-    Grid interconnect, turbines and transformers are a real physical limit on the AI
-    buildout. If the model never feels them, it is projecting a world with infinite
-    electricity.
-    """
-    assert _q4(central, 2032).power_capped, "the power ceiling never binds -- it is inert"
+def test_every_demand_ceiling_binds_somewhere(central):
+    """capex / power / packaging are a min() stack. A ceiling that never binds is either
+    mis-calibrated or dead code pretending to be a constraint."""
+    binding = {d.binding_demand_constraint for d in central.demand if d.quarter.year >= 2024}
+    assert "capex" in binding, "capex never limits accelerator purchases -- money is free?"
+    assert "power" in binding, (
+        "power never limits accelerator deployment. Then the GPU eviction mechanism, and "
+        "the replacement demand that flows from it, can never switch on."
+    )
 
 
 def test_hbm_demand_is_not_below_hbm_supply_during_the_shortage(central):

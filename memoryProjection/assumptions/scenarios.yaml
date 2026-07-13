@@ -45,7 +45,11 @@ loose:
     tech_roadmap.dram_gb_per_wafer: {mult: 1.06}
     tech_roadmap.three_d_dram.first_volume_year: {set: 2029}
     demand_ai.efficiency_deflator_annual: {mult: 1.8}
-    demand_ai.accelerator_units_millions: {mult: 0.80}
+    # AI accelerator demand is cut via CAPEX, which is what actually drives the fleet.
+    # This used to override `demand_ai.accelerator_units_millions` -- a path that the
+    # fleet refactor orphaned, so the Loose scenario was silently missing this lever
+    # entirely while still claiming to have it.
+    demand_ai.hyperscaler_capex_usd_bn: {mult: 0.80}
     demand_ai.hbm_gb_per_accelerator: {mult: 0.90}
     supply_capacity.dram_wafer_capacity_kwspm.samsung: {mult: 1.10}
     supply_capacity.dram_wafer_capacity_kwspm.sk_hynix: {mult: 1.10}
@@ -72,10 +76,14 @@ sliders:
       Annual fall in bits per unit of delivered intelligence (quantisation, MoE, KV
       compression). The largest single force that could close the gap without a
       single new fab. Move this first if you want to break the result.
-  - path: demand_ai.accelerator_units_millions
-    label: AI accelerator units
+  - path: demand_ai.hyperscaler_capex_usd_bn
+    label: Hyperscaler AI capex
     min: 0.5
     max: 1.6
+    help: >
+      Drives how many accelerators the money WANTS to buy. Together with the grid and
+      with CoWoS, it is one of the three ceilings on accelerator shipments -- and it is
+      the yardstick the model uses to decide whether power is genuinely scarce.
   - path: demand_ai.hbm_gb_per_accelerator
     label: HBM GB per accelerator
     min: 0.6
@@ -116,7 +124,22 @@ sliders:
     label: CXL memory pooling savings
     min: 0.0
     max: 3.0
-  - path: demand_ai.power_ceiling.new_ai_datacenter_gw_per_year
-    label: New AI datacentre power per year
+  - path: datacenter.announced_gw_per_year
+    label: Announced AI datacentre pipeline
     min: 0.5
     max: 1.6
+  - path: datacenter.realisation_rate
+    label: Share of announced capacity actually built
+    min: 0.5
+    max: 1.4
+    help: >
+      The gap between the AI buildout the industry announces and the one it delivers.
+      One of the most speculative numbers in the model, and one of the most important.
+  - path: gpu_fleet.economics.revenue_per_tflop_year_usd
+    label: Compute price (revenue per TFLOP-year)
+    min: 0.5
+    max: 1.6
+    help: >
+      Compute price deflation drives GPU retirement, hence replacement demand. If AI
+      compute stays scarce (this stays high), old GPUs stay viable and the replacement
+      stream -- a real slice of future HBM demand -- simply never happens.

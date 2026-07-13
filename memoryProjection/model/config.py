@@ -143,21 +143,45 @@ def _wrap(node: Any, prefix: str = "") -> Any:
     return node
 
 
-def load(directory: Path | None = None) -> Assumptions:
-    directory = directory or ASSUMPTIONS_DIR
+_CACHE: dict[Path, dict[str, Any]] = {}
+
+
+def _parse(directory: Path) -> dict[str, Any]:
     tree: dict[str, Any] = {}
     for path in sorted(directory.glob("*.yaml")):
         with path.open() as fh:
             raw = yaml.safe_load(fh) or {}
-        namespace = path.stem
-        tree[namespace] = _wrap(raw, namespace)
+        tree[path.stem] = _wrap(raw, path.stem)
     if not tree:
         raise FileNotFoundError(f"no assumption files found in {directory}")
-    return Assumptions(tree)
+    return tree
+
+
+def load(directory: Path | None = None) -> Assumptions:
+    """A fresh, independently-mutable assumption set.
+
+    The YAML is parsed ONCE per directory and cached; each call deep-copies the cached
+    tree. Callers mutate what they get back (that is how scenarios and sliders work), so
+    handing out a shared tree would let one run's overrides leak into the next.
+
+    The cache matters: `build_assumptions` is called once per Monte Carlo draw, so a
+    400-draw run was re-parsing ten YAML files 400 times -- and then deep-copying the
+    freshly-parsed tree a second time for good measure.
+    """
+    import copy
+
+    directory = directory or ASSUMPTIONS_DIR
+    if directory not in _CACHE:
+        _CACHE[directory] = _parse(directory)
+    return Assumptions(copy.deepcopy(_CACHE[directory]))
 
 
 def deep_copy(a: Assumptions) -> Assumptions:
-    """Fresh copy so a scenario's overrides don't leak into the next run."""
+    """Fresh copy so a scenario's overrides don't leak into the next run.
+
+    Note `load()` already returns an independent copy, so this is only needed when
+    branching from an assumption set you have already modified.
+    """
     import copy
 
     return Assumptions(copy.deepcopy(a.tree))
