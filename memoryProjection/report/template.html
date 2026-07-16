@@ -1,498 +1,950 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Global Memory Bit Supply &amp; Demand — 2026Q1 to 2032Q4</title>
-<script>/*__PLOTLY__*/</script>
-<style>
-  :root {
-    --surface-1:#fcfcfb; --plane:#f9f9f7;
-    --text-primary:#0b0b0b; --text-secondary:#52514e; --muted:#898781;
-    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
-    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
-    --s5:#4a3aa7; --s6:#e34948; --s7:#e87ba4; --s8:#008300;
-    --div-pos:#d03b3b; --div-neg:#2a78d6; --div-mid:#f0efec;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --surface-1:#1a1a19; --plane:#0d0d0d;
-      --text-primary:#ffffff; --text-secondary:#c3c2b7; --muted:#898781;
-      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
-      --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
-      --s5:#9085e9; --s6:#e66767; --s7:#d55181; --s8:#008300;
-      --div-mid:#383835;
-    }
-  }
-  * { box-sizing:border-box; }
-  body {
-    margin:0; padding:32px 20px 80px; background:var(--plane); color:var(--text-primary);
-    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  }
-  .wrap { max-width:1060px; margin:0 auto; }
-  h1 { font-size:26px; line-height:1.25; margin:0 0 6px; letter-spacing:-0.01em; }
-  h2 { font-size:18px; margin:0 0 4px; letter-spacing:-0.005em; }
-  .sub { color:var(--text-secondary); margin:0 0 28px; }
-  .card {
-    background:var(--surface-1); border:1px solid var(--border); border-radius:12px;
-    padding:20px; margin:0 0 20px;
-  }
-  .note { color:var(--text-secondary); font-size:13.5px; margin:6px 0 14px; }
-  .chart { width:100%; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 14px; }
-  button.scn {
-    font:inherit; font-size:13px; padding:6px 14px; border-radius:999px; cursor:pointer;
-    border:1px solid var(--border); background:transparent; color:var(--text-secondary);
-  }
-  button.scn[aria-pressed="true"] { background:var(--text-primary); color:var(--surface-1); border-color:var(--text-primary); }
-  .sliders { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:14px 24px; }
-  .sl label { display:block; font-size:13px; color:var(--text-secondary); margin-bottom:2px; }
-  .sl input { width:100%; accent-color:var(--s1); }
-  .sl .val { float:right; font-variant-numeric:tabular-nums; color:var(--text-primary); font-weight:600; }
-  .helptip { font-size:12px; color:var(--muted); margin-top:2px; }
-  table { border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
-  th,td { text-align:right; padding:5px 8px; border-bottom:1px solid var(--grid); white-space:nowrap; }
-  th:first-child, td:first-child { text-align:left; }
-  th { color:var(--text-secondary); font-weight:600; }
-  .scroll { overflow-x:auto; }
-  details { margin-top:10px; }
-  summary { cursor:pointer; color:var(--text-secondary); font-size:13.5px; }
-  .kv { display:flex; gap:28px; flex-wrap:wrap; margin:2px 0 16px; }
-  .kv div { }
-  .kv .n { font-size:24px; font-weight:650; letter-spacing:-0.01em; }
-  .kv .l { font-size:12.5px; color:var(--text-secondary); }
-  code { font-size:12.5px; background:var(--plane); padding:1px 5px; border-radius:4px; }
-</style>
-</head>
-<body>
-<div class="wrap">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Global Memory Bit Supply &amp; Demand — 2026Q1 to 2032Q4</title>
+        <script>
+            /*__PLOTLY__*/
+        </script>
+        <style>
+            :root {
+                --surface-1: #fcfcfb;
+                --plane: #f9f9f7;
+                --text-primary: #0b0b0b;
+                --text-secondary: #52514e;
+                --muted: #898781;
+                --grid: #e1e0d9;
+                --axis: #c3c2b7;
+                --border: rgba(11, 11, 11, 0.1);
+                --s1: #2a78d6;
+                --s2: #eb6834;
+                --s3: #1baf7a;
+                --s4: #eda100;
+                --s5: #4a3aa7;
+                --s6: #e34948;
+                --s7: #e87ba4;
+                --s8: #008300;
+                --div-pos: #d03b3b;
+                --div-neg: #2a78d6;
+                --div-mid: #f0efec;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --surface-1: #1a1a19;
+                    --plane: #0d0d0d;
+                    --text-primary: #ffffff;
+                    --text-secondary: #c3c2b7;
+                    --muted: #898781;
+                    --grid: #2c2c2a;
+                    --axis: #383835;
+                    --border: rgba(255, 255, 255, 0.1);
+                    --s1: #3987e5;
+                    --s2: #d95926;
+                    --s3: #199e70;
+                    --s4: #c98500;
+                    --s5: #9085e9;
+                    --s6: #e66767;
+                    --s7: #d55181;
+                    --s8: #008300;
+                    --div-mid: #383835;
+                }
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                margin: 0;
+                padding: 32px 20px 80px;
+                background: var(--plane);
+                color: var(--text-primary);
+                font:
+                    15px/1.6 ui-sans-serif,
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    sans-serif;
+            }
+            .wrap {
+                max-width: 1060px;
+                margin: 0 auto;
+            }
+            h1 {
+                font-size: 26px;
+                line-height: 1.25;
+                margin: 0 0 6px;
+                letter-spacing: -0.01em;
+            }
+            h2 {
+                font-size: 18px;
+                margin: 0 0 4px;
+                letter-spacing: -0.005em;
+            }
+            .sub {
+                color: var(--text-secondary);
+                margin: 0 0 28px;
+            }
+            .card {
+                background: var(--surface-1);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 20px;
+                margin: 0 0 20px;
+            }
+            .note {
+                color: var(--text-secondary);
+                font-size: 13.5px;
+                margin: 6px 0 14px;
+            }
+            .chart {
+                width: 100%;
+            }
+            .row {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin: 0 0 14px;
+            }
+            button.scn {
+                font: inherit;
+                font-size: 13px;
+                padding: 6px 14px;
+                border-radius: 999px;
+                cursor: pointer;
+                border: 1px solid var(--border);
+                background: transparent;
+                color: var(--text-secondary);
+            }
+            button.scn[aria-pressed="true"] {
+                background: var(--text-primary);
+                color: var(--surface-1);
+                border-color: var(--text-primary);
+            }
+            .sliders {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 14px 24px;
+            }
+            .sl label {
+                display: block;
+                font-size: 13px;
+                color: var(--text-secondary);
+                margin-bottom: 2px;
+            }
+            .sl input {
+                width: 100%;
+                accent-color: var(--s1);
+            }
+            .sl .val {
+                float: right;
+                font-variant-numeric: tabular-nums;
+                color: var(--text-primary);
+                font-weight: 600;
+            }
+            .helptip {
+                font-size: 12px;
+                color: var(--muted);
+                margin-top: 2px;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 13px;
+                font-variant-numeric: tabular-nums;
+            }
+            th,
+            td {
+                text-align: right;
+                padding: 5px 8px;
+                border-bottom: 1px solid var(--grid);
+                white-space: nowrap;
+            }
+            th:first-child,
+            td:first-child {
+                text-align: left;
+            }
+            th {
+                color: var(--text-secondary);
+                font-weight: 600;
+            }
+            .scroll {
+                overflow-x: auto;
+            }
+            details {
+                margin-top: 10px;
+            }
+            summary {
+                cursor: pointer;
+                color: var(--text-secondary);
+                font-size: 13.5px;
+            }
+            .kv {
+                display: flex;
+                gap: 28px;
+                flex-wrap: wrap;
+                margin: 2px 0 16px;
+            }
+            .kv div {
+            }
+            .kv .n {
+                font-size: 24px;
+                font-weight: 650;
+                letter-spacing: -0.01em;
+            }
+            .kv .l {
+                font-size: 12.5px;
+                color: var(--text-secondary);
+            }
+            code {
+                font-size: 12.5px;
+                background: var(--plane);
+                padding: 1px 5px;
+                border-radius: 4px;
+            }
 
-<h1>Global memory bit supply &amp; demand</h1>
-<p class="sub">Quarterly, 2018Q1–2032Q4. DRAM and NAND modelled separately. Demand is defined as
-<strong>bits the world would consume at constant 2025 real prices</strong> — no price layer, so the
-gap is a <em>pressure index</em>, not a forecast of physical shortfall.</p>
+            /* The lede. A reader who stops after this card should still leave with the finding,
+     the size of the finding, and the reason not to over-trust it. */
+            .lede {
+                border-left: 3px solid var(--s1);
+            }
+            .lede p {
+                margin: 0 0 12px;
+            }
+            .lede .kv {
+                margin: 16px 0;
+                padding: 14px 0;
+                border-top: 1px solid var(--grid);
+                border-bottom: 1px solid var(--grid);
+                gap: 32px;
+            }
+            .lede .kv .n {
+                font-size: 27px;
+            }
+            .lede .kv .sub2 {
+                font-size: 12px;
+                color: var(--muted);
+                margin-top: 1px;
+            }
+            .reading {
+                margin: 0;
+                padding-left: 18px;
+                font-size: 13.5px;
+                color: var(--text-secondary);
+            }
+            .reading li {
+                margin: 5px 0;
+            }
+            .reading strong {
+                color: var(--text-primary);
+            }
 
-<div class="card">
-  <h2>The two lines — DRAM</h2>
-  <p class="note">Everything up to <strong>2026Q2 is observed data</strong>, not model output — so the supply
-  line has <em>no</em> uncertainty band there. After it, the shaded band is the P10–P90 range from a 400-draw
-  Monte Carlo, widening with horizon.</p>
-  <p class="note"><strong>The demand band never collapses, even over history.</strong> Supply was measured;
-  "bits the world would consume at 2025 prices" is a counterfactual that was never observed and never can be.
-  It is inferred in 2019 exactly as much as in 2031.</p>
-  <div class="row" id="scnbtns"></div>
-  <div id="dram" class="chart"></div>
-  <div id="dramgap" class="chart"></div>
-  <p class="note" id="scndesc"></p>
-</div>
+            /* Limits. Deliberately not styled as a footnote -- it is a finding, not a disclaimer. */
+            .limits {
+                border-left: 3px solid var(--div-pos);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <h1>Global memory bit supply &amp; demand</h1>
+            <p class="sub">
+                Quarterly, 2018Q1–2032Q4. DRAM and NAND modelled separately.
+                Supply is bits the industry can physically make, through the
+                tightest of six bottlenecks. Demand is
+                <strong
+                    >bits the world would consume at constant 2025 real
+                    prices</strong
+                >.
+            </p>
 
-<div class="card">
-  <h2>The GPU fleet — where AI memory demand actually comes from</h2>
-  <p class="note">Accelerator shipments are an <em>output</em> here, not an assumption:
-  <code>shipments = (new datacentre power)/kW + (power freed by retirements)/kW</code>. The second term is
-  replacement demand, and it is the piece an exogenous shipments series cannot see — retiring an A100
-  (80GB, 0.4kW) and refilling its watt with a Rubin Ultra (~1TB) is a large HBM purchase for
-  <em>zero</em> net growth in power.</p>
-  <div id="fleet" class="chart"></div>
-</div>
+            <div class="card lede">
+                <h2>TL;DR</h2>
+                <p>
+                    DRAM/HBM demand at 2025 prices runs ahead of supply
+                    <em>past</em> 2032. In the central case the gap widens from
+                    <strong
+                        ><span id="ld-g26"></span> at end-2026 to
+                        <span id="ld-g29"></span> by end-2029</strong
+                    >
+                    — a deficit of about <span id="ld-def"></span> EB/yr —
+                    before flattening. The constraint that binds in the
+                    out-years is plain wafer capacity and EUV lithography. AI is
+                    the driver, and because an AI rack carries terabytes of
+                    ordinary DDR5 beside its HBM, the squeeze does not spare
+                    buyers who never touch an HBM stack.
+                </p>
 
-<div class="card">
-  <h2>When is a GPU no longer worth its watt?</h2>
-  <p class="note">Two retirement rules, and the spread between them is the whole argument. A chip stays
-  <strong>cash-viable</strong> for years after it stops being worth the watt it occupies — because when power
-  is the binding constraint, the real cost of an old GPU isn't its electricity bill, it's the output foregone
-  by not putting a frontier chip in that same watt.</p>
-  <div class="scroll"><table id="viability"></table></div>
-</div>
+                <div class="kv">
+                    <div>
+                        <div class="n" id="kv-gap"></div>
+                        <div class="l">DRAM gap, 2029Q4 (central)</div>
+                        <div class="sub2">
+                            <span id="kv-def"></span> EB/yr of unserved demand
+                        </div>
+                    </div>
+                    <div>
+                        <div class="n" id="kv-scn"></div>
+                        <div class="l">Loose ↔ Tight scenario</div>
+                        <div class="sub2">
+                            P10–P90 band: <span id="kv-band"></span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="n">Wafers &amp; EUV</div>
+                        <div class="l">What actually binds, 2027+</div>
+                        <div class="sub2">not HBM back-end, not CoWoS</div>
+                    </div>
+                    <div>
+                        <div class="n" id="kv-fleet"></div>
+                        <div class="l">AI fleet power by 2032Q4</div>
+                        <div class="sub2">
+                            <span id="kv-fx"></span>× today — the load-bearing
+                            bet
+                        </div>
+                    </div>
+                </div>
 
-<div class="card">
-  <h2>Datacentre pipeline: announced vs actually built</h2>
-  <p class="note">Announced capacity and delivered capacity are very different numbers. Projects die in
-  grid-interconnect queues, for want of transformers and turbines, on local opposition, or because the anchor
-  tenant walks. Most of the shortfall is <em>slip</em> (it arrives late) rather than outright cancellation —
-  the model tracks the two separately, because they have opposite implications for the out-years.</p>
-  <div id="pipeline" class="chart"></div>
-</div>
+                <p
+                    style="
+                        font-size: 13.5px;
+                        color: var(--text-secondary);
+                        margin-bottom: 8px;
+                    "
+                >
+                    <strong style="color: var(--text-primary)"
+                        >Three things to know before you read any chart
+                        below:</strong
+                    >
+                </p>
+                <ol class="reading">
+                    <li>
+                        <strong
+                            >The gap is a pressure index, not a shortfall
+                            forecast.</strong
+                        >
+                        There is no price layer, so demand never self-corrects
+                        and the gap runs hotter than any real gap can. It
+                        measures how hard price and rationing have to work — not
+                        how many bits go missing.
+                    </li>
+                    <li>
+                        <strong
+                            >The model can barely produce a glut after 2027, by
+                            construction.</strong
+                        >
+                        Across <span id="ld-draws"></span> Monte Carlo draws,
+                        the chance the gap ever closes peaks at
+                        <strong><span id="ld-pc"></span></strong>. That
+                        near-zero is a fact about the model's shape, not
+                        evidence about the world — see
+                        <a href="#limits" style="color: var(--s1)"
+                            >what this model cannot show you</a
+                        >. Everything here varies the <em>size</em> of the
+                        shortage, never really its <em>sign</em>.
+                    </li>
+                    <li>
+                        <strong
+                            >Everything through 2026Q2 is observed data, not
+                            model output.</strong
+                        >
+                        Supply is pinned to it and carries no error bar there.
+                        Demand is <em>never</em> observed — it is a
+                        counterfactual — so its band stays open all the way back
+                        to 2018.
+                    </li>
+                </ol>
+            </div>
 
-<div class="card">
-  <h2>Which bottleneck binds, and when</h2>
-  <p class="note">Supply is <code>min()</code> over six candidate ceilings. This band shows which one is the
-  gate in each quarter, and the line shows how much slack sits behind it — a constraint that binds by 1%
-  is a different world from one that binds by 25%, because relieving the first just exposes the next.</p>
-  <div id="binding" class="chart"></div>
-</div>
+            <div class="card">
+                <h2>The two lines — DRAM</h2>
+                <p class="note">
+                    Everything up to <strong>2026Q2 is observed data</strong>,
+                    not model output — so the supply line has
+                    <em>no</em> uncertainty band there. After it, the shaded
+                    band is the P10–P90 range from a 400-draw Monte Carlo,
+                    widening with horizon.
+                </p>
+                <p class="note">
+                    <strong
+                        >The demand band never collapses, even over
+                        history.</strong
+                    >
+                    Supply was measured; "bits the world would consume at 2025
+                    prices" is a counterfactual that was never observed and
+                    never can be. It is inferred in 2019 exactly as much as in
+                    2031, and carries roughly ±15% throughout. In the top chart
+                    that band is thin over history simply because demand itself
+                    was small — it reads most clearly in the <em>gap</em> chart
+                    below, where the grey band over 2019 and 2023 is what "we do
+                    not know what buyers would have taken" actually looks like.
+                </p>
+                <div class="row" id="scnbtns"></div>
+                <div id="dram" class="chart"></div>
+                <div id="dramgap" class="chart"></div>
+                <p class="note" id="scndesc"></p>
+            </div>
 
-<div class="card">
-  <h2>Where the DRAM demand goes</h2>
-  <p class="note">Central case. Note that AI pulls <em>conventional</em> DRAM too — an AI rack carries
-  terabytes of DDR5/LPDDR beside its HBM — so the squeeze does not spare buyers who aren't buying HBM.</p>
-  <div id="stack" class="chart"></div>
-</div>
+            <div class="card">
+                <h2>
+                    The GPU fleet — where AI memory demand actually comes from
+                </h2>
+                <p class="note">
+                    Accelerator shipments are an <em>output</em> here, not an
+                    assumption:
+                    <code
+                        >shipments = (new datacentre power)/kW + (power freed by
+                        retirements)/kW</code
+                    >. The second term is replacement demand, and it is the
+                    piece an exogenous shipments series cannot see — retiring an
+                    A100 (80GB, 0.4kW) and refilling its watt with a Rubin Ultra
+                    (~1TB) is a large HBM purchase for <em>zero</em> net growth
+                    in power.
+                </p>
+                <div id="fleet" class="chart"></div>
+            </div>
 
-<div class="card">
-  <h2>The two lines — NAND</h2>
-  <p class="note">Modelled separately and never summed with DRAM: NAND ships ~25× more bytes, and unlike
-  DRAM it still scales vertically (layers), so it can answer demand without new fabs.</p>
-  <div id="nand" class="chart"></div>
-</div>
+            <div class="card">
+                <h2>When is a GPU no longer worth its watt?</h2>
+                <p class="note">
+                    Two retirement rules, and the spread between them is the
+                    whole argument. A chip stays
+                    <strong>cash-viable</strong> for years after it stops being
+                    worth the watt it occupies — because when power is the
+                    binding constraint, the real cost of an old GPU isn't its
+                    electricity bill, it's the output foregone by not putting a
+                    frontier chip in that same watt.
+                </p>
+                <div class="scroll"><table id="viability"></table></div>
+            </div>
 
-<div class="card">
-  <h2>Stress the model</h2>
-  <p class="note">One factor at a time, moved away from Central with everything else held. Combined moves are
-  covered by the three preset scenarios above rather than faked by adding single-factor deltas — the model is
-  not linear. Grey = Central for reference.</p>
-  <div class="sliders" id="sliders"></div>
-  <div id="sldchart" class="chart" style="margin-top:14px"></div>
-</div>
+            <div class="card">
+                <h2>Datacentre pipeline: announced vs actually built</h2>
+                <p class="note">
+                    Announced capacity and delivered capacity are very different
+                    numbers. Projects die in grid-interconnect queues, for want
+                    of transformers and turbines, on local opposition, or
+                    because the anchor tenant walks. Most of the shortfall is
+                    <em>slip</em> (it arrives late) rather than outright
+                    cancellation — the model tracks the two separately, because
+                    they have opposite implications for the out-years.
+                </p>
+                <div id="pipeline" class="chart"></div>
+            </div>
 
-<div class="card">
-  <h2>What the answer actually rests on</h2>
-  <p class="note">Sensitivity of the 2029Q4 DRAM gap to each input, ±25%. The top bar is the variable that
-  matters; everything below it is detail.</p>
-  <div id="tornado" class="chart"></div>
-</div>
+            <div class="card">
+                <h2>Which bottleneck binds, and when</h2>
+                <p class="note">
+                    Supply is <code>min()</code> over six candidate ceilings.
+                    This band shows which one is the gate in each quarter, and
+                    the line shows how much slack sits behind it — a constraint
+                    that binds by 1% is a different world from one that binds by
+                    25%, because relieving the first just exposes the next.
+                </p>
+                <div id="binding" class="chart"></div>
+            </div>
 
-<div class="card">
-  <h2>Cross-check: bottom-up vs top-down</h2>
-  <p class="note">AI accelerator units built from the bottom up (unit shipments) against the same number
-  implied top-down by hyperscaler capex. A divergence over ±20% means one of them is wrong.</p>
-  <div class="scroll"><table id="capex"></table></div>
-</div>
+            <div class="card">
+                <h2>Where the DRAM demand goes</h2>
+                <p class="note">
+                    Central case. Note that AI pulls <em>conventional</em> DRAM
+                    too — an AI rack carries terabytes of DDR5/LPDDR beside its
+                    HBM — so the squeeze does not spare buyers who aren't buying
+                    HBM.
+                </p>
+                <div id="stack" class="chart"></div>
+            </div>
 
-<div class="card">
-  <h2>Table view</h2>
-  <p class="note">Central case, annualised. EB/yr. Three palette slots sit below 3:1 contrast on the light
-  surface, so the numbers are here in full rather than left to colour alone.</p>
-  <div class="scroll"><table id="tbl"></table></div>
-  <details>
-    <summary>Assumption audit</summary>
-    <p class="note" id="audit"></p>
-  </details>
-</div>
+            <div class="card">
+                <h2>The two lines — NAND</h2>
+                <p class="note">
+                    Modelled separately and never summed with DRAM: NAND ships
+                    ~25× more bytes, and unlike DRAM it still scales vertically
+                    (layers), so it can answer demand without new fabs.
+                </p>
+                <div id="nand" class="chart"></div>
+            </div>
 
-</div>
-<script>
-const D = /*__DATA__*/;
-const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
-const HIST = D.scenarios.central.quarters.indexOf(D.actuals_end);
-const QS = D.scenarios.central.quarters;
+            <div class="card">
+                <h2>Stress the model</h2>
+                <p class="note">
+                    One factor at a time, moved away from Central with
+                    everything else held. Combined moves are covered by the
+                    three preset scenarios above rather than faked by adding
+                    single-factor deltas — the model is not linear. Grey =
+                    Central for reference.
+                </p>
+                <div class="sliders" id="sliders"></div>
+                <div id="sldchart" class="chart" style="margin-top: 14px"></div>
+            </div>
 
-// 60 quarterly categories will not fit as 60 rotated labels. Tick the years, keep the
-// quarters in the hover -- the resolution stays in the data, not on the axis.
-const XTICKS = {
-  tickmode:'array',
-  tickvals: QS.filter(q => q.endsWith('Q1')),
-  ticktext: QS.filter(q => q.endsWith('Q1')).map(q => q.slice(0,4)),
-  tickangle: 0,
-};
+            <div class="card">
+                <h2>What the answer actually rests on</h2>
+                <p class="note">
+                    Sensitivity of the 2029Q4 DRAM gap to each input, ±25%. Read
+                    it top-down for the <em>ranking</em> — density is the input
+                    that matters, and everything below the top three is detail.
+                </p>
+                <p class="note">
+                    But read it left-to-right for the more important result:
+                    <strong>no bar crosses zero.</strong> Move any single input
+                    by ±25% and the 2029Q4 gap still lands somewhere between
+                    <span id="tor-lo"></span> and <span id="tor-hi"></span>. Not
+                    one assumption in this model, pushed as hard as it can
+                    honestly be pushed, closes the gap. That is not a robustness
+                    win — it is a warning, and the next card explains why.
+                </p>
+                <div id="tornado" class="chart"></div>
+            </div>
 
-function base(extra) {
-  const o = Object.assign({
-    paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
-    font:{color:css('--text-secondary'), size:12,
-          family:'ui-sans-serif,system-ui,-apple-system,sans-serif'},
-    margin:{l:58,r:20,t:10,b:32},
-    yaxis:{gridcolor:css('--grid'), zerolinecolor:css('--axis'), linecolor:'rgba(0,0,0,0)'},
-    hovermode:'x unified',
-    hoverlabel:{bgcolor:css('--surface-1'), bordercolor:css('--border'),
-                font:{color:css('--text-primary')}},
-    legend:{orientation:'h', y:1.14, x:0, font:{size:12}},
-    showlegend:true,
-  }, extra||{});
-  o.xaxis = Object.assign({
-    gridcolor:'rgba(0,0,0,0)', linecolor:css('--axis'), tickcolor:css('--axis'),
-    showspikes:true, spikemode:'across', spikethickness:1,
-    spikecolor:css('--muted'), spikedash:'dot',
-  }, XTICKS, extra && extra.xaxis || {});
-  return o;
-}
-const CFG = {displayModeBar:false, responsive:true};
+            <div class="card limits" id="limits">
+                <h2>What this model cannot show you</h2>
+                <p class="note">
+                    The gap never closes above, and no scenario, band or slider
+                    closes it either. Before reading that as a finding,
+                    understand that
+                    <strong
+                        >the model is not able to produce the
+                        alternative.</strong
+                    >
+                </p>
+                <p class="note">
+                    Every historical glut in the backcast — 2019, 2023 — was
+                    made by two mechanisms, and
+                    <strong
+                        >both are switched off for the whole projection</strong
+                    >:
+                </p>
+                <ul class="reading">
+                    <li>
+                        <strong>Producers cut output.</strong> The 2023 crash
+                        was a deliberate industry-wide utilisation cut to ~76%.
+                        Forward utilisation here is pinned at
+                        <strong>96–97%</strong> — everyone runs flat out,
+                        forever. The model has no way to be disciplined.
+                    </li>
+                    <li>
+                        <strong>Buyers destock.</strong> The 2019 and 2023 gluts
+                        were inventory drawdowns of −4.5 and −7.5 EB/yr. The
+                        inventory swing is held at
+                        <strong>zero from 2028</strong>. After the hoarding of
+                        2026–27, the one thing that has ended every previous
+                        shortage is the one thing that cannot happen here.
+                    </li>
+                </ul>
+                <p class="note">
+                    So across <span id="lim-draws"></span> draws,
+                    <code>P(gap closed)</code> never rises above
+                    <strong><span id="lim-pc"></span></strong> in any out-year
+                    quarter. That near-zero is a property of the model's
+                    <em>shape</em>, not evidence about the world. The bands
+                    express uncertainty about <strong>how big</strong> the
+                    shortage is; they say almost nothing about
+                    <strong>whether</strong> there is one. Neither does the
+                    tornado.
+                </p>
+                <p class="note">
+                    Three further absences worth holding in mind. There is
+                    <strong>no price layer</strong>, so demand never
+                    self-corrects. There is
+                    <strong>no supply response</strong> — a 40% gap in 2029
+                    finances no extra fab, though in reality it obviously would;
+                    memory is the textbook cobweb industry, and the roadmaps
+                    this model takes as given are precisely what a gap like this
+                    would move. And the whole demand line rests on the AI fleet
+                    reaching <strong id="lim-gw"></strong> of IT load by 2032,
+                    roughly <span id="lim-x"></span>× today's — if that buildout
+                    does not happen, nothing else on this page matters.
+                </p>
+                <p class="note">
+                    The honest summary: this is
+                    <strong>what current roadmaps imply if nobody reacts</strong
+                    >. The reacting is the part that has been left out, and it
+                    is not a small part.
+                </p>
+            </div>
 
-// The projection/backcast divider, reused on every time chart.
-const DIVIDER = () => ({type:'line', x0:D.actuals_end, x1:D.actuals_end, yref:'paper',
-                        y0:0, y1:1, line:{color:css('--axis'), width:1, dash:'dash'}});
+            <div class="card">
+                <h2>Cross-check: bottom-up vs top-down</h2>
+                <p class="note">
+                    AI accelerator units built from the bottom up (unit
+                    shipments) against the same number implied top-down by
+                    hyperscaler capex. A divergence over ±20% means one of them
+                    is wrong.
+                </p>
+                <div class="scroll"><table id="capex"></table></div>
+            </div>
 
-// Split each series into backcast (faded) and projection (solid) so the eye never
-// mistakes retrodiction for forecast.
-function split(q, y) {
-  const h = y.map((v,i) => i <= HIST ? v : null);
-  const p = y.map((v,i) => i >= HIST ? v : null);
-  return [h, p];
-}
+            <div class="card">
+                <h2>Table view</h2>
+                <p class="note">
+                    Central case, annualised. EB/yr. Three palette slots sit
+                    below 3:1 contrast on the light surface, so the numbers are
+                    here in full rather than left to colour alone.
+                </p>
+                <div class="scroll"><table id="tbl"></table></div>
+                <details>
+                    <summary>Assumption audit</summary>
+                    <p class="note" id="audit"></p>
+                </details>
+            </div>
+        </div>
+        <script>
+            const D = /*__DATA__*/;
+            const css = k => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+            const HIST = D.scenarios.central.quarters.indexOf(D.actuals_end);
+            const QS = D.scenarios.central.quarters;
 
-let scenario = 'central';
+            // 60 quarterly categories will not fit as 60 rotated labels. Tick the years, keep the
+            // quarters in the hover -- the resolution stays in the data, not on the axis.
+            const XTICKS = {
+              tickmode:'array',
+              tickvals: QS.filter(q => q.endsWith('Q1')),
+              ticktext: QS.filter(q => q.endsWith('Q1')).map(q => q.slice(0,4)),
+              tickangle: 0,
+            };
 
-// A P10-P90 ribbon behind a line. Drawn first so the line sits on top of it.
-function ribbon(q, lo, hi, rgba) {
-  return [
-    {x:q, y:hi, type:'scatter', mode:'lines', line:{width:0}, hoverinfo:'skip', showlegend:false},
-    {x:q, y:lo, type:'scatter', mode:'lines', line:{width:0}, fill:'tonexty',
-     fillcolor:rgba, hoverinfo:'skip', showlegend:false},
-  ];
-}
+            function base(extra) {
+              const o = Object.assign({
+                paper_bgcolor:'rgba(0,0,0,0)', plot_bgcolor:'rgba(0,0,0,0)',
+                font:{color:css('--text-secondary'), size:12,
+                      family:'ui-sans-serif,system-ui,-apple-system,sans-serif'},
+                margin:{l:58,r:20,t:10,b:32},
+                yaxis:{gridcolor:css('--grid'), zerolinecolor:css('--axis'), linecolor:'rgba(0,0,0,0)'},
+                hovermode:'x unified',
+                hoverlabel:{bgcolor:css('--surface-1'), bordercolor:css('--border'),
+                            font:{color:css('--text-primary')}},
+                legend:{orientation:'h', y:1.14, x:0, font:{size:12}},
+                showlegend:true,
+              }, extra||{});
+              o.xaxis = Object.assign({
+                gridcolor:'rgba(0,0,0,0)', linecolor:css('--axis'), tickcolor:css('--axis'),
+                showspikes:true, spikemode:'across', spikethickness:1,
+                spikecolor:css('--muted'), spikedash:'dot',
+              }, XTICKS, extra && extra.xaxis || {});
+              return o;
+            }
+            const CFG = {displayModeBar:false, responsive:true};
 
-function drawDram() {
-  const s = D.scenarios[scenario], q = s.quarters;
-  const [sh, sp] = split(q, s.dram_supply), [dh, dp] = split(q, s.dram_demand);
-  const L = (name,x,y,color,dash,show) => ({
-    x:q, y:y, name:name, type:'scatter', mode:'lines', connectgaps:false,
-    line:{color:color, width:2, dash:dash||'solid'}, opacity:dash?0.45:1,
-    showlegend:!!show, hovertemplate:'%{y:.1f} EB/yr<extra>'+name+'</extra>'
-  });
-  // Bands only on the central case -- the Monte Carlo is run around Central, and
-  // painting its band behind Tight or Loose would be claiming a spread we didn't compute.
-  const bands = scenario === 'central' ? [
-    ...ribbon(q, D.band.supply_p10, D.band.supply_p90, 'rgba(42,120,214,0.15)'),
-    ...ribbon(q, D.band.demand_p10, D.band.demand_p90, 'rgba(235,104,52,0.13)'),
-  ] : [];
+            // The projection/backcast divider, reused on every time chart.
+            const DIVIDER = () => ({type:'line', x0:D.actuals_end, x1:D.actuals_end, yref:'paper',
+                                    y0:0, y1:1, line:{color:css('--axis'), width:1, dash:'dash'}});
 
-  Plotly.react('dram', [
-    ...bands,
-    L('Supply', q, sh, css('--s1'), 'dot', false),
-    L('Supply', q, sp, css('--s1'), null, true),
-    L('Demand @ 2025 prices', q, dh, css('--s2'), 'dot', false),
-    L('Demand @ 2025 prices', q, dp, css('--s2'), null, true),
-  ], base({height:340, yaxis:{gridcolor:css('--grid'), title:{text:'EB / year',font:{size:12}},
-      zerolinecolor:css('--axis')},
-      shapes:[DIVIDER()],
-      annotations:[{x:D.actuals_end, y:1.03, yref:'paper', text:'observed │ projected',
-               showarrow:false, font:{size:11, color:css('--muted')}, xanchor:'center'}]}), CFG);
+            // Split each series into backcast (faded) and projection (solid) so the eye never
+            // mistakes retrodiction for forecast.
+            function split(q, y) {
+              const h = y.map((v,i) => i <= HIST ? v : null);
+              const p = y.map((v,i) => i >= HIST ? v : null);
+              return [h, p];
+            }
 
-  // Diverging fill: shortage above zero, glut below. A single red fill would paint the
-  // 2019 and 2023 gluts the same colour as the 2026 shortage, which is the exact
-  // opposite of what happened.
-  const g = s.dram_gap;
-  const pos = g.map(v => v > 0 ? v : 0), neg = g.map(v => v < 0 ? v : 0);
-  const gapBands = scenario === 'central'
-    ? ribbon(q, D.band.gap_p10, D.band.gap_p90, 'rgba(137,135,129,0.20)') : [];
-  Plotly.react('dramgap', [
-    ...gapBands,
-    {x:q, y:pos, type:'scatter', mode:'lines', name:'Shortage', line:{width:0},
-     fill:'tozeroy', fillcolor:'rgba(208,59,59,0.18)', hoverinfo:'skip', showlegend:false},
-    {x:q, y:neg, type:'scatter', mode:'lines', name:'Glut', line:{width:0},
-     fill:'tozeroy', fillcolor:'rgba(42,120,214,0.18)', hoverinfo:'skip', showlegend:false},
-    {x:q, y:g, type:'scatter', mode:'lines', name:'Gap',
-     line:{color:css('--text-primary'), width:2},
-     hovertemplate:'%{y:+.1f}%<extra>gap</extra>', showlegend:false},
-  ], base({height:210, showlegend:false,
-    yaxis:{gridcolor:css('--grid'), ticksuffix:'%', zerolinecolor:css('--text-secondary'),
-           zerolinewidth:1.5, title:{text:'Gap: demand ÷ supply − 1', font:{size:12}}},
-    margin:{l:58,r:20,t:6,b:32},
-    shapes:[DIVIDER()]}), CFG);
+            let scenario = 'central';
 
-  document.getElementById('scndesc').textContent = D.scenario_desc[scenario];
-}
+            // A P10-P90 ribbon behind a line. Drawn first so the line sits on top of it.
+            function ribbon(q, lo, hi, rgba) {
+              return [
+                {x:q, y:hi, type:'scatter', mode:'lines', line:{width:0}, hoverinfo:'skip', showlegend:false},
+                {x:q, y:lo, type:'scatter', mode:'lines', line:{width:0}, fill:'tonexty',
+                 fillcolor:rgba, hoverinfo:'skip', showlegend:false},
+              ];
+            }
 
-function drawBinding() {
-  const s = D.scenarios.central, q = s.quarters;
-  const keys = Object.keys(D.constraint_label);
-  const colors = {C1_wafer_capacity:css('--s5'), C2_lithography:css('--s4'), C3_other_wfe:css('--s3')};
-  const traces = keys.map(k => ({
-    x:q, y:s.binding.map(b => b===k ? 1 : 0), name:D.constraint_label[k],
-    type:'bar', marker:{color:colors[k], line:{width:0}}, yaxis:'y',
-    hovertemplate:D.constraint_label[k]+'<extra></extra>'
-  }));
-  traces.push({
-    x:q, y:s.binding_margin, name:'Slack behind the binding constraint',
-    type:'scatter', mode:'lines', yaxis:'y2',
-    line:{color:css('--text-primary'), width:2},
-    hovertemplate:'%{y:.1f}% slack<extra></extra>'
-  });
-  Plotly.react('binding', traces, base({
-    height:290, barmode:'stack', bargap:0,
-    margin:{l:58,r:20,t:10,b:32},
-    yaxis:{visible:false, range:[0,1], domain:[0.74,1]},
-    yaxis2:{domain:[0,0.60], gridcolor:css('--grid'), ticksuffix:'%',
-            title:{text:'slack to next-tightest', font:{size:11}},
-            zerolinecolor:css('--axis'), rangemode:'tozero'},
-    legend:{orientation:'h', y:1.22, x:0, font:{size:11}},
-  }), CFG);
-}
+            function drawDram() {
+              const s = D.scenarios[scenario], q = s.quarters;
+              const [sh, sp] = split(q, s.dram_supply), [dh, dp] = split(q, s.dram_demand);
+              const L = (name,x,y,color,dash,show) => ({
+                x:q, y:y, name:name, type:'scatter', mode:'lines', connectgaps:false,
+                line:{color:color, width:2, dash:dash||'solid'}, opacity:dash?0.45:1,
+                showlegend:!!show, hovertemplate:'%{y:.1f} EB/yr<extra>'+name+'</extra>'
+              });
+              // Bands only on the central case -- the Monte Carlo is run around Central, and
+              // painting its band behind Tight or Loose would be claiming a spread we didn't compute.
+              const bands = scenario === 'central' ? [
+                ...ribbon(q, D.band.supply_p10, D.band.supply_p90, 'rgba(42,120,214,0.15)'),
+                ...ribbon(q, D.band.demand_p10, D.band.demand_p90, 'rgba(235,104,52,0.13)'),
+              ] : [];
 
-function drawStack() {
-  const q = D.scenarios.central.quarters;
-  const hues = ['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
-  const traces = Object.entries(D.demand_stack).map(([name, y], i) => ({
-    x:q, y:y, name:name, type:'scatter', mode:'lines', stackgroup:'d',
-    line:{width:1, color:css('--surface-1')},  // 2px surface gap between fills
-    fillcolor:css(hues[i]),
-    hovertemplate:'%{y:.1f} EB/yr<extra>'+name+'</extra>'
-  }));
-  Plotly.react('stack', traces, base({height:360,
-    yaxis:{gridcolor:css('--grid'), title:{text:'EB / year', font:{size:12}}},
-    legend:{orientation:'h', y:1.22, x:0, font:{size:11}}}), CFG);
-}
+              Plotly.react('dram', [
+                ...bands,
+                L('Supply', q, sh, css('--s1'), 'dot', false),
+                L('Supply', q, sp, css('--s1'), null, true),
+                L('Demand @ 2025 prices', q, dh, css('--s2'), 'dot', false),
+                L('Demand @ 2025 prices', q, dp, css('--s2'), null, true),
+              ], base({height:340, yaxis:{gridcolor:css('--grid'), title:{text:'EB / year',font:{size:12}},
+                  zerolinecolor:css('--axis')},
+                  shapes:[DIVIDER()],
+                  annotations:[{x:D.actuals_end, y:1.03, yref:'paper', text:'observed │ projected',
+                           showarrow:false, font:{size:11, color:css('--muted')}, xanchor:'center'}]}), CFG);
 
-function drawNand() {
-  const s = D.scenarios[scenario], q = s.quarters;
-  const [sh, sp] = split(q, s.nand_supply), [dh, dp] = split(q, s.nand_demand);
-  const L = (n,y,c,d,show) => ({x:q, y:y, name:n, type:'scatter', mode:'lines', connectgaps:false,
-    line:{color:c, width:2, dash:d||'solid'}, opacity:d?0.35:1, showlegend:!!show,
-    hovertemplate:'%{y:,.0f} EB/yr<extra>'+n+'</extra>'});
-  Plotly.react('nand', [
-    L('Supply', sh, css('--s1'), 'dot', false), L('Supply', sp, css('--s1'), null, true),
-    L('Demand @ 2025 prices', dh, css('--s2'), 'dot', false),
-    L('Demand @ 2025 prices', dp, css('--s2'), null, true),
-  ], base({height:300, yaxis:{gridcolor:css('--grid'), title:{text:'EB / year', font:{size:12}}},
-    shapes:[DIVIDER()]}), CFG);
-}
+              // Diverging fill: shortage above zero, glut below. A single red fill would paint the
+              // 2019 and 2023 gluts the same colour as the 2026 shortage, which is the exact
+              // opposite of what happened.
+              const g = s.dram_gap;
+              const pos = g.map(v => v > 0 ? v : 0), neg = g.map(v => v < 0 ? v : 0);
+              const gapBands = scenario === 'central'
+                ? ribbon(q, D.band.gap_p10, D.band.gap_p90, 'rgba(137,135,129,0.20)') : [];
+              Plotly.react('dramgap', [
+                ...gapBands,
+                {x:q, y:pos, type:'scatter', mode:'lines', name:'Shortage', line:{width:0},
+                 fill:'tozeroy', fillcolor:'rgba(208,59,59,0.18)', hoverinfo:'skip', showlegend:false},
+                {x:q, y:neg, type:'scatter', mode:'lines', name:'Glut', line:{width:0},
+                 fill:'tozeroy', fillcolor:'rgba(42,120,214,0.18)', hoverinfo:'skip', showlegend:false},
+                {x:q, y:g, type:'scatter', mode:'lines', name:'Gap',
+                 line:{color:css('--text-primary'), width:2},
+                 hovertemplate:'%{y:+.1f}%<extra>gap</extra>', showlegend:false},
+              ], base({height:210, showlegend:false,
+                yaxis:{gridcolor:css('--grid'), ticksuffix:'%', zerolinecolor:css('--text-secondary'),
+                       zerolinewidth:1.5, title:{text:'Gap: demand ÷ supply − 1', font:{size:12}}},
+                margin:{l:58,r:20,t:6,b:32},
+                shapes:[DIVIDER()]}), CFG);
 
-function drawFleet() {
-  const f = D.fleet, q = f.quarters;
-  Plotly.react('fleet', [
-    {x:q, y:f.shipments, name:'Accelerators shipped', type:'scatter', mode:'lines',
-     line:{color:css('--s1'), width:2}, yaxis:'y',
-     hovertemplate:'%{y:.1f}M/yr<extra>shipped</extra>'},
-    {x:q, y:f.retirements, name:'Retired (freeing watts)', type:'scatter', mode:'lines',
-     line:{color:css('--s6'), width:2}, yaxis:'y',
-     hovertemplate:'%{y:.1f}M/yr<extra>retired</extra>'},
-    {x:q, y:f.replacement_share, name:'Replacement share of shipments', type:'scatter',
-     mode:'lines', line:{color:css('--s5'), width:2, dash:'dot'}, yaxis:'y2',
-     hovertemplate:'%{y:.0f}%<extra>replacement</extra>'},
-  ], base({height:320,
-    yaxis:{domain:[0.52,1], gridcolor:css('--grid'),
-           title:{text:'M units / yr', font:{size:11}}},
-    yaxis2:{domain:[0,0.40], gridcolor:css('--grid'), ticksuffix:'%', rangemode:'tozero',
-            title:{text:'replacement %', font:{size:11}}},
-    shapes:[DIVIDER()],
-    legend:{orientation:'h', y:1.2, x:0, font:{size:11}}}), CFG);
-}
+              document.getElementById('scndesc').textContent = D.scenario_desc[scenario];
+            }
 
-function drawPipeline() {
-  const p = D.pipeline, q = p.quarters;
-  Plotly.react('pipeline', [
-    {x:q, y:p.announced, name:'Announced', type:'scatter', mode:'lines',
-     line:{color:css('--muted'), width:2, dash:'dash'},
-     hovertemplate:'%{y:.0f} GW/yr<extra>announced</extra>'},
-    {x:q, y:p.delivered, name:'Actually delivered', type:'scatter', mode:'lines',
-     line:{color:css('--s3'), width:2}, fill:'tozeroy', fillcolor:'rgba(27,175,122,0.14)',
-     hovertemplate:'%{y:.0f} GW/yr<extra>delivered</extra>'},
-  ], base({height:280,
-    yaxis:{gridcolor:css('--grid'), title:{text:'GW / year (new AI datacentre)', font:{size:12}}},
-    shapes:[DIVIDER()]}), CFG);
-}
+            function drawBinding() {
+              const s = D.scenarios.central, q = s.quarters;
+              const keys = Object.keys(D.constraint_label);
+              const colors = {C1_wafer_capacity:css('--s5'), C2_lithography:css('--s4'), C3_other_wfe:css('--s3')};
+              const traces = keys.map(k => ({
+                x:q, y:s.binding.map(b => b===k ? 1 : 0), name:D.constraint_label[k],
+                type:'bar', marker:{color:colors[k], line:{width:0}}, yaxis:'y',
+                hovertemplate:D.constraint_label[k]+'<extra></extra>'
+              }));
+              traces.push({
+                x:q, y:s.binding_margin, name:'Slack behind the binding constraint',
+                type:'scatter', mode:'lines', yaxis:'y2',
+                line:{color:css('--text-primary'), width:2},
+                hovertemplate:'%{y:.1f}% slack<extra></extra>'
+              });
+              Plotly.react('binding', traces, base({
+                height:290, barmode:'stack', bargap:0,
+                margin:{l:58,r:20,t:10,b:32},
+                yaxis:{visible:false, range:[0,1], domain:[0.74,1]},
+                yaxis2:{domain:[0,0.60], gridcolor:css('--grid'), ticksuffix:'%',
+                        title:{text:'slack to next-tightest', font:{size:11}},
+                        zerolinecolor:css('--axis'), rangemode:'tozero'},
+                legend:{orientation:'h', y:1.22, x:0, font:{size:11}},
+              }), CFG);
+            }
 
-function drawViability() {
-  const t = document.getElementById('viability');
-  t.innerHTML = '<tr><th>Vintage</th><th>TFLOP/W</th><th>HBM</th>'
-    + '<th>Power-evicted<br><span style="font-weight:400">not worth the watt</span></th>'
-    + '<th>Cash-unviable<br><span style="font-weight:400">stops paying its power bill</span></th>'
-    + '<th>Years of life it loses</th></tr>'
-    + D.viability.map(r => {
-        const qn = s => s === '—' ? null : (+s.slice(0,4)) * 4 + (+s.slice(5)) - 1;
-        const a = qn(r.power_evicted), b = qn(r.cash_unviable);
-        const lost = (a !== null && b !== null) ? ((b - a) / 4).toFixed(1) : (a !== null ? '4+' : '—');
-        return `<tr><td>${r.vintage}</td><td>${r.tflops_per_watt}</td><td>${r.hbm_gb} GB</td>`
-          + `<td>${r.power_evicted}</td><td>${r.cash_unviable}</td><td>${lost}</td></tr>`;
-      }).join('');
-}
+            function drawStack() {
+              const q = D.scenarios.central.quarters;
+              const hues = ['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+              const traces = Object.entries(D.demand_stack).map(([name, y], i) => ({
+                x:q, y:y, name:name, type:'scatter', mode:'lines', stackgroup:'d',
+                line:{width:1, color:css('--surface-1')},  // 2px surface gap between fills
+                fillcolor:css(hues[i]),
+                hovertemplate:'%{y:.1f} EB/yr<extra>'+name+'</extra>'
+              }));
+              Plotly.react('stack', traces, base({height:360,
+                yaxis:{gridcolor:css('--grid'), title:{text:'EB / year', font:{size:12}}},
+                legend:{orientation:'h', y:1.22, x:0, font:{size:11}}}), CFG);
+            }
 
-// ---- sliders (one factor at a time) ----
-const state = D.sliders.map(s => s.default_index);
-function drawSliders() {
-  const q = D.scenarios.central.quarters;
-  const traces = [{
-    x:q, y:D.scenarios.central.dram_gap, name:'Central', type:'scatter', mode:'lines',
-    line:{color:css('--muted'), width:2, dash:'dot'},
-    hovertemplate:'%{y:+.1f}%<extra>Central</extra>'
-  }];
-  D.sliders.forEach((s,i) => {
-    if (state[i] === s.default_index) return;   // only draw what's been moved
-    traces.push({
-      x:q, y:s.gaps[state[i]], name:s.label, type:'scatter', mode:'lines',
-      line:{width:2}, hovertemplate:'%{y:+.1f}%<extra>'+s.label+'</extra>'
-    });
-  });
-  Plotly.react('sldchart', traces, base({height:320,
-    colorway:[css('--s1'),css('--s2'),css('--s3'),css('--s4'),css('--s5'),css('--s6'),css('--s7'),css('--s8')],
-    yaxis:{gridcolor:css('--grid'), ticksuffix:'%', zerolinecolor:css('--axis'), zerolinewidth:1.5,
-           title:{text:'DRAM gap', font:{size:12}}},
-    legend:{orientation:'h', y:1.16, x:0, font:{size:11}}}), CFG);
-}
+            function drawNand() {
+              const s = D.scenarios[scenario], q = s.quarters;
+              const [sh, sp] = split(q, s.nand_supply), [dh, dp] = split(q, s.nand_demand);
+              const L = (n,y,c,d,show) => ({x:q, y:y, name:n, type:'scatter', mode:'lines', connectgaps:false,
+                line:{color:c, width:2, dash:d||'solid'}, opacity:d?0.35:1, showlegend:!!show,
+                hovertemplate:'%{y:,.0f} EB/yr<extra>'+n+'</extra>'});
+              Plotly.react('nand', [
+                L('Supply', sh, css('--s1'), 'dot', false), L('Supply', sp, css('--s1'), null, true),
+                L('Demand @ 2025 prices', dh, css('--s2'), 'dot', false),
+                L('Demand @ 2025 prices', dp, css('--s2'), null, true),
+              ], base({height:300, yaxis:{gridcolor:css('--grid'), title:{text:'EB / year', font:{size:12}}},
+                shapes:[DIVIDER()]}), CFG);
+            }
 
-function buildSliders() {
-  const box = document.getElementById('sliders');
-  D.sliders.forEach((s,i) => {
-    const d = document.createElement('div'); d.className = 'sl';
-    const fmt = v => s.absolute ? v.toFixed(2) : (v>=1 ? '+' : '') + Math.round((v-1)*100) + '%';
-    d.innerHTML = `<label>${s.label}<span class="val" id="v${i}">${fmt(s.positions[state[i]])}</span></label>
-      <input type="range" min="0" max="${s.positions.length-1}" step="1" value="${state[i]}" id="r${i}">
-      ${s.help ? `<div class="helptip">${s.help.trim()}</div>` : ''}`;
-    box.appendChild(d);
-    d.querySelector('#r'+i).addEventListener('input', e => {
-      state[i] = +e.target.value;
-      document.getElementById('v'+i).textContent = fmt(s.positions[state[i]]);
-      drawSliders();
-    });
-  });
-}
+            function drawFleet() {
+              const f = D.fleet, q = f.quarters;
+              Plotly.react('fleet', [
+                {x:q, y:f.shipments, name:'Accelerators shipped', type:'scatter', mode:'lines',
+                 line:{color:css('--s1'), width:2}, yaxis:'y',
+                 hovertemplate:'%{y:.1f}M/yr<extra>shipped</extra>'},
+                {x:q, y:f.retirements, name:'Retired (freeing watts)', type:'scatter', mode:'lines',
+                 line:{color:css('--s6'), width:2}, yaxis:'y',
+                 hovertemplate:'%{y:.1f}M/yr<extra>retired</extra>'},
+                {x:q, y:f.replacement_share, name:'Replacement share of shipments', type:'scatter',
+                 mode:'lines', line:{color:css('--s5'), width:2, dash:'dot'}, yaxis:'y2',
+                 hovertemplate:'%{y:.0f}%<extra>replacement</extra>'},
+              ], base({height:320,
+                yaxis:{domain:[0.52,1], gridcolor:css('--grid'),
+                       title:{text:'M units / yr', font:{size:11}}},
+                yaxis2:{domain:[0,0.40], gridcolor:css('--grid'), ticksuffix:'%', rangemode:'tozero',
+                        title:{text:'replacement %', font:{size:11}}},
+                shapes:[DIVIDER()],
+                legend:{orientation:'h', y:1.2, x:0, font:{size:11}}}), CFG);
+            }
 
-function drawTornado() {
-  const t = D.tornado, b = D.tornado_baseline;
-  const names = t.map(r => r.label).reverse();
-  const lo = t.map(r => r.low - b).reverse();
-  const hi = t.map(r => r.high - b).reverse();
-  Plotly.react('tornado', [
-    {y:names, x:lo, name:'−25%', type:'bar', orientation:'h',
-     marker:{color:css('--div-neg')}, base:b,
-     hovertemplate:'%{x:+.1f} pts<extra>−25%</extra>'},
-    {y:names, x:hi, name:'+25%', type:'bar', orientation:'h',
-     marker:{color:css('--div-pos')}, base:b,
-     hovertemplate:'%{x:+.1f} pts<extra>+25%</extra>'},
-  ], base({height:400, barmode:'overlay',
-    margin:{l:250,r:24,t:10,b:40},
-    xaxis:{gridcolor:css('--grid'), ticksuffix:'%', linecolor:'rgba(0,0,0,0)',
-           title:{text:'2029Q4 DRAM gap', font:{size:12}}},
-    yaxis:{gridcolor:'rgba(0,0,0,0)', automargin:true},
-    hovermode:'closest',
-    shapes:[{type:'line', x0:b, x1:b, yref:'paper', y0:0, y1:1,
-             line:{color:css('--text-primary'), width:1.5, dash:'dash'}}]}), CFG);
-}
+            function drawPipeline() {
+              const p = D.pipeline, q = p.quarters;
+              Plotly.react('pipeline', [
+                {x:q, y:p.announced, name:'Announced', type:'scatter', mode:'lines',
+                 line:{color:css('--muted'), width:2, dash:'dash'},
+                 hovertemplate:'%{y:.0f} GW/yr<extra>announced</extra>'},
+                {x:q, y:p.delivered, name:'Actually delivered', type:'scatter', mode:'lines',
+                 line:{color:css('--s3'), width:2}, fill:'tozeroy', fillcolor:'rgba(27,175,122,0.14)',
+                 hovertemplate:'%{y:.0f} GW/yr<extra>delivered</extra>'},
+              ], base({height:280,
+                yaxis:{gridcolor:css('--grid'), title:{text:'GW / year (new AI datacentre)', font:{size:12}}},
+                shapes:[DIVIDER()]}), CFG);
+            }
 
-function tables() {
-  const c = document.getElementById('capex');
-  c.innerHTML = '<tr><th>Year</th><th>Bottom-up (M units)</th><th>Top-down from capex (M)</th>'
-    + '<th>Divergence</th><th>Power-capped?</th></tr>'
-    + D.capex.map(r => `<tr><td>${r.year}</td><td>${r.bottom_up_m}</td><td>${r.top_down_m}</td>`
-      + `<td>${r.divergence_pct > 0 ? '+' : ''}${r.divergence_pct}%</td>`
-      + `<td>${r.power_capped ? 'yes' : 'no'}</td></tr>`).join('');
+            function drawViability() {
+              const t = document.getElementById('viability');
+              t.innerHTML = '<tr><th>Vintage</th><th>TFLOP/W</th><th>HBM</th>'
+                + '<th>Power-evicted<br><span style="font-weight:400">not worth the watt</span></th>'
+                + '<th>Cash-unviable<br><span style="font-weight:400">stops paying its power bill</span></th>'
+                + '<th>Years of life it loses</th></tr>'
+                + D.viability.map(r => {
+                    const qn = s => s === '—' ? null : (+s.slice(0,4)) * 4 + (+s.slice(5)) - 1;
+                    const a = qn(r.power_evicted), b = qn(r.cash_unviable);
+                    const lost = (a !== null && b !== null) ? ((b - a) / 4).toFixed(1) : (a !== null ? '4+' : '—');
+                    return `<tr><td>${r.vintage}</td><td>${r.tflops_per_watt}</td><td>${r.hbm_gb} GB</td>`
+                      + `<td>${r.power_evicted}</td><td>${r.cash_unviable}</td><td>${lost}</td></tr>`;
+                  }).join('');
+            }
 
-  const t = document.getElementById('tbl');
-  const ys = Object.keys(D.annual);
-  t.innerHTML = '<tr><th>Year</th><th>DRAM supply</th><th>DRAM demand</th><th>Gap</th>'
-    + '<th>Merchant gap</th><th>HBM</th><th>NAND supply</th><th>NAND demand</th><th>Binding</th></tr>'
-    + ys.map(y => { const a = D.annual[y]; return `<tr><td>${y}</td><td>${a.dram_supply_eb}</td>`
-      + `<td>${a.dram_demand_eb}</td><td>${(a.dram_gap*100).toFixed(1)}%</td>`
-      + `<td>${(a.dram_addressable_gap*100).toFixed(1)}%</td><td>${a.hbm_supply_eb}</td>`
-      + `<td>${Math.round(a.nand_supply_eb)}</td><td>${Math.round(a.nand_demand_eb)}</td>`
-      + `<td>${(D.constraint_label[a.binding]||'').replace(/^C\d /,'')}</td></tr>`; }).join('');
+            // ---- sliders (one factor at a time) ----
+            const state = D.sliders.map(s => s.default_index);
+            function drawSliders() {
+              const q = D.scenarios.central.quarters;
+              const traces = [{
+                x:q, y:D.scenarios.central.dram_gap, name:'Central', type:'scatter', mode:'lines',
+                line:{color:css('--muted'), width:2, dash:'dot'},
+                hovertemplate:'%{y:+.1f}%<extra>Central</extra>'
+              }];
+              D.sliders.forEach((s,i) => {
+                if (state[i] === s.default_index) return;   // only draw what's been moved
+                traces.push({
+                  x:q, y:s.gaps[state[i]], name:s.label, type:'scatter', mode:'lines',
+                  line:{width:2}, hovertemplate:'%{y:+.1f}%<extra>'+s.label+'</extra>'
+                });
+              });
+              Plotly.react('sldchart', traces, base({height:320,
+                colorway:[css('--s1'),css('--s2'),css('--s3'),css('--s4'),css('--s5'),css('--s6'),css('--s7'),css('--s8')],
+                yaxis:{gridcolor:css('--grid'), ticksuffix:'%', zerolinecolor:css('--axis'), zerolinewidth:1.5,
+                       title:{text:'DRAM gap', font:{size:12}}},
+                legend:{orientation:'h', y:1.16, x:0, font:{size:11}}}), CFG);
+            }
 
-  document.getElementById('audit').textContent =
-    Object.entries(D.audit).map(([k,v]) => `${v} ${k}`).join(' · ')
-    + ' — every input carries a source URL and a confidence tag in assumptions/*.yaml.';
-}
+            function buildSliders() {
+              const box = document.getElementById('sliders');
+              D.sliders.forEach((s,i) => {
+                const d = document.createElement('div'); d.className = 'sl';
+                const fmt = v => s.absolute ? v.toFixed(2) : (v>=1 ? '+' : '') + Math.round((v-1)*100) + '%';
+                d.innerHTML = `<label>${s.label}<span class="val" id="v${i}">${fmt(s.positions[state[i]])}</span></label>
+                  <input type="range" min="0" max="${s.positions.length-1}" step="1" value="${state[i]}" id="r${i}">
+                  ${s.help ? `<div class="helptip">${s.help.trim()}</div>` : ''}`;
+                box.appendChild(d);
+                d.querySelector('#r'+i).addEventListener('input', e => {
+                  state[i] = +e.target.value;
+                  document.getElementById('v'+i).textContent = fmt(s.positions[state[i]]);
+                  drawSliders();
+                });
+              });
+            }
 
-function scenarioButtons() {
-  const box = document.getElementById('scnbtns');
-  ['tight','central','loose'].forEach(k => {
-    const b = document.createElement('button');
-    b.className = 'scn'; b.textContent = k[0].toUpperCase()+k.slice(1);
-    b.setAttribute('aria-pressed', k === scenario);
-    b.onclick = () => {
-      scenario = k;
-      box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.textContent.toLowerCase() === k));
-      drawDram(); drawNand();
-    };
-    box.appendChild(b);
-  });
-}
+            function drawTornado() {
+              const t = D.tornado, b = D.tornado_baseline;
+              const names = t.map(r => r.label).reverse();
+              const lo = t.map(r => r.low - b).reverse();
+              const hi = t.map(r => r.high - b).reverse();
+              Plotly.react('tornado', [
+                {y:names, x:lo, name:'−25%', type:'bar', orientation:'h',
+                 marker:{color:css('--div-neg')}, base:b,
+                 hovertemplate:'%{x:+.1f} pts<extra>−25%</extra>'},
+                {y:names, x:hi, name:'+25%', type:'bar', orientation:'h',
+                 marker:{color:css('--div-pos')}, base:b,
+                 hovertemplate:'%{x:+.1f} pts<extra>+25%</extra>'},
+              ], base({height:400, barmode:'overlay',
+                margin:{l:250,r:24,t:10,b:40},
+                xaxis:{gridcolor:css('--grid'), ticksuffix:'%', linecolor:'rgba(0,0,0,0)',
+                       title:{text:'2029Q4 DRAM gap', font:{size:12}}},
+                yaxis:{gridcolor:'rgba(0,0,0,0)', automargin:true},
+                hovermode:'closest',
+                shapes:[{type:'line', x0:b, x1:b, yref:'paper', y0:0, y1:1,
+                         line:{color:css('--text-primary'), width:1.5, dash:'dash'}}]}), CFG);
+            }
 
-function drawAll() {
-  drawDram(); drawFleet(); drawPipeline(); drawBinding();
-  drawStack(); drawNand(); drawSliders(); drawTornado();
-}
-scenarioButtons(); buildSliders(); tables(); drawViability(); drawAll();
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
-</script>
-</body>
+            function tables() {
+              const c = document.getElementById('capex');
+              c.innerHTML = '<tr><th>Year</th><th>Bottom-up (M units)</th><th>Top-down from capex (M)</th>'
+                + '<th>Divergence</th><th>Power-capped?</th></tr>'
+                + D.capex.map(r => `<tr><td>${r.year}</td><td>${r.bottom_up_m}</td><td>${r.top_down_m}</td>`
+                  + `<td>${r.divergence_pct > 0 ? '+' : ''}${r.divergence_pct}%</td>`
+                  + `<td>${r.power_capped ? 'yes' : 'no'}</td></tr>`).join('');
+
+              const t = document.getElementById('tbl');
+              const ys = Object.keys(D.annual);
+              t.innerHTML = '<tr><th>Year</th><th>DRAM supply</th><th>DRAM demand</th><th>Gap</th>'
+                + '<th>Merchant gap</th><th>HBM</th><th>NAND supply</th><th>NAND demand</th><th>Binding</th></tr>'
+                + ys.map(y => { const a = D.annual[y]; return `<tr><td>${y}</td><td>${a.dram_supply_eb}</td>`
+                  + `<td>${a.dram_demand_eb}</td><td>${(a.dram_gap*100).toFixed(1)}%</td>`
+                  + `<td>${(a.dram_addressable_gap*100).toFixed(1)}%</td><td>${a.hbm_supply_eb}</td>`
+                  + `<td>${Math.round(a.nand_supply_eb)}</td><td>${Math.round(a.nand_demand_eb)}</td>`
+                  + `<td>${(D.constraint_label[a.binding]||'').replace(/^C\d /,'')}</td></tr>`; }).join('');
+
+              document.getElementById('audit').textContent =
+                Object.entries(D.audit).map(([k,v]) => `${v} ${k}`).join(' · ')
+                + ' — every input carries a source URL and a confidence tag in assumptions/*.yaml.';
+            }
+
+            function scenarioButtons() {
+              const box = document.getElementById('scnbtns');
+              ['tight','central','loose'].forEach(k => {
+                const b = document.createElement('button');
+                b.className = 'scn'; b.textContent = k[0].toUpperCase()+k.slice(1);
+                b.setAttribute('aria-pressed', k === scenario);
+                b.onclick = () => {
+                  scenario = k;
+                  box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.textContent.toLowerCase() === k));
+                  drawDram(); drawNand();
+                };
+                box.appendChild(b);
+              });
+            }
+
+            // The lede and the limits card quote numbers. They read them from the model payload
+            // rather than carrying them as text, because a hardcoded summary is one assumption edit
+            // away from being confidently wrong on the most-read part of the page.
+            function fillHeadline() {
+              const h = D.headline;
+              const pct = v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%';
+              const set = (id, s) => { const e = document.getElementById(id); if (e) e.textContent = s; };
+
+              set('ld-g26', pct(h.gap_2026q4));
+              set('ld-g29', pct(h.gap_2029q4));
+              set('ld-def', h.deficit_2029q4_eb.toFixed(0));
+
+              set('kv-gap', pct(h.gap_2029q4));
+              set('kv-def', '≈' + h.deficit_2029q4_eb.toFixed(0));
+              set('kv-scn', pct(h.gap_loose) + ' … ' + pct(h.gap_tight));
+              set('kv-band', pct(h.gap_p10) + ' … ' + pct(h.gap_p90));
+              set('kv-fleet', h.fleet_gw_2032.toFixed(0) + ' GW');
+              set('kv-fx', '~' + h.fleet_multiple.toFixed(0));
+
+              set('lim-gw', h.fleet_gw_2032.toFixed(0) + ' GW');
+              set('lim-x', h.fleet_multiple.toFixed(0));
+
+              const pc = h.p_closed_max_outyear.toFixed(1) + '%';
+              set('ld-pc', pc);   set('lim-pc', pc);
+              set('ld-draws', h.draws); set('lim-draws', h.draws);
+
+              // The tornado's full envelope, straight off the bars, so the sentence about it can
+              // never disagree with the chart underneath it.
+              const vals = D.tornado.flatMap(t => [t.low, t.high]);
+              set('tor-lo', pct(Math.min(...vals)));
+              set('tor-hi', pct(Math.max(...vals)));
+            }
+
+            function drawAll() {
+              drawDram(); drawFleet(); drawPipeline(); drawBinding();
+              drawStack(); drawNand(); drawSliders(); drawTornado();
+            }
+            fillHeadline();
+            scenarioButtons(); buildSliders(); tables(); drawViability(); drawAll();
+            matchMedia('(prefers-color-scheme: dark)').addEventListener('change', drawAll);
+        </script>
+    </body>
 </html>

@@ -21,6 +21,35 @@ draws:
   confidence: high
   notes: Enough for stable P10/P50/P90 at this precision; the model is cheap to run.
 
+# The horizon term above goes to zero before 2026Q2, which is right for anything that was
+# MEASURED: you cannot be uncertain about a bit that was produced and counted.
+#
+# But the demand line is not a measurement. "Bits the world would consume at constant 2025
+# prices" is a COUNTERFACTUAL -- what buyers would have taken, not what they took after
+# being rationed by price. Nobody observed it in 2019 and nobody will observe it in 2031.
+# Left alone, the sqrt(horizon) term collapses its band to a hairline over history, which
+# would claim we had measured the thing the model exists to infer.
+#
+# So the content assumptions -- the "trend content" levers, the 32GB AI PC and the 16GB
+# phone -- carry a floor: their spread never falls below sigma * sqrt(this many years),
+# no matter how far back you look.
+#
+#     sigma(t) = sigma_2027 * sqrt(max(years_beyond_2026, counterfactual_floor_years))
+#
+# It applies ONLY to the inferred-content inputs. Wafer capacity, the datacentre pipeline
+# and the observed supply series keep the honest zero: those were built, and counted.
+counterfactual_floor_years:
+  value: 1.25
+  unit: years
+  source: DERIVED
+  confidence: low
+  notes: >
+    Chosen so the irreducible demand band is a little wider than the 1-year-horizon
+    forecast band. Rationale: reconstructing what buyers would have paid 2025 prices for
+    in 2019 is at least as hard as guessing next year's content, and arguably harder,
+    because the counterfactual can never be settled by waiting. It is a judgement about
+    an unobservable, and the number should be read as such.
+
 # Fractional 1-sigma spread at a 1-year horizon (2027). Widened by sqrt(horizon).
 # These are judgements about how well each thing is known, and they differ a lot:
 # wafer capacity is announced years ahead and is knowable; the AI efficiency deflator
@@ -116,7 +145,25 @@ sigma_2027:
     unit: fraction
     source: DERIVED
     confidence: low
-    notes: The largest single conventional DRAM pool, so its band matters.
+    notes: >
+      The largest single conventional DRAM pool, so its band matters. Carries the
+      counterfactual floor: server content at 2025 prices is inferred, never observed.
+  demand_conventional.pc.dram_gb_per_unit:
+    value: 0.10
+    unit: fraction
+    source: DERIVED
+    confidence: low
+    notes: >
+      TREND content, not shipped content -- the 2026 configs are being cut below this
+      line and those cuts ARE the shortage. Carries the counterfactual floor.
+  demand_conventional.smartphone.dram_gb_per_unit:
+    value: 0.10
+    unit: fraction
+    source: DERIVED
+    confidence: low
+    notes: >
+      Same: Chinese OEMs have publicly derated memory rather than eat the cost, so the
+      shipped number is a rationed number. Carries the counterfactual floor.
 
 # Correlation. Drawing every input independently understates the tails badly: the world
 # where AI demand disappoints is the same world where the buildout stalls AND compute

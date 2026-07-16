@@ -16,9 +16,13 @@ and produces what the inputs imply.
 python3 -m venv .venv && PIP_USER=0 ./.venv/bin/pip install numpy pandas pyyaml plotly pytest
 ./.venv/bin/python -m pytest tests/ -q        
 ./.venv/bin/python -m report.build          
+./.venv/bin/python -m report.export         # -> report/memory_model.sqlite
 ```
 
-Open `report/memory_model.html` in a browser. It has scenario toggles, sliders on the
+Open `report/memory_model.html` in a browser.
+`report/memory_model.sqlite` holds every output in queryable form -- balances, demand
+segments, fleet, pipeline, bands, tornado, and the full flattened assumption set --
+for pandas/DuckDB/Datasette use without re-running the model. It has scenario toggles, sliders on the
 12 load-bearing inputs, the binding-constraint band, the demand decomposition, a
 sensitivity tornado, and a table view.
 
@@ -108,7 +112,8 @@ model/
   market.py      STUB (price layer, deliberately out of scope)
   scenarios.py   Tight / Central / Loose; sensitivity tornado
 report/build.py  -> memory_model.html
-tests/           53 tests: units, backcast, china invariants, cross-checks, fleet
+report/export.py -> memory_model.sqlite (every output, queryable)
+tests/           50 tests: units, backcast, china invariants, cross-checks, fleet
 ```
 
 Assumptions are **data, not code**. Every input carries a source URL and a confidence
@@ -182,10 +187,22 @@ The rest:
 
 ## Known limitations
 
+- **The model cannot produce a glut after 2027, and this is structural, not a finding.**
+  Forward utilisation is pinned at 0.96–0.97 and the inventory swing is held at zero from
+  2028. Those are the two mechanisms that made every glut in the backcast — the 2023 crash
+  was a utilisation cut to 0.76, and the 2019 and 2023 gluts were destocks. Both are
+  switched off for the whole projection, so no Monte Carlo draw can end the shortage and
+  `p_gap_closed` reads ~0 in the out-years. That zero is a property of the model's shape.
+  It is **not** evidence that a glut is unlikely. Every scenario, band and slider in the
+  report varies the *size* of the shortage, never its *sign*.
 - No price layer, so demand never self-corrects and the gap runs hotter than any real
   gap would. Read the *deficit in EB*, not the ratio, when comparing scopes.
+- No endogenous supply response: a 40% gap in 2029 finances no extra capacity. The
+  out-year gap is what current roadmaps imply, not what will happen — the roadmaps
+  themselves move *because* the gap exists.
 - Out-year wafer capacity (2029+) is the model's assumption, not anyone's guidance.
 - The efficiency deflator (`demand_ai.efficiency_deflator_annual`) and CXMT's true
   yield are judgment calls, not data lookups. They are the first two sliders.
-- Deterministic. Three scenarios cannot support a probability statement; a Monte Carlo
-  over the starred inputs is the natural next step.
+- The bands are a 400-draw correlated Monte Carlo (`model/uncertainty.py`), but the
+  sigmas are judgements, not fitted. Read them as "roughly how wrong could this be",
+  not as calibrated probabilities.

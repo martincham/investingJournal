@@ -141,20 +141,24 @@ def test_replacement_demand_is_material(a):
     assert peak > 0.05, f"replacement never exceeds {peak:.1%} of shipments -- it is inert"
 
 
-def test_hbm_content_is_consistent_across_the_two_files(a):
-    """gpu_fleet.yaml:vintages.hbm_gb and demand_ai.yaml:hbm_gb_per_accelerator are the
-    same number wearing two hats. Two sources of truth is a bug waiting to happen."""
-    from model.calendar import Quarter as Q
-    from model.calendar import interpolate_annual
+def test_memory_content_has_a_single_source_of_truth(a):
+    """Memory content per accelerator lives in demand_ai.yaml and ONLY there.
 
+    It used to be duplicated in gpu_fleet.yaml:vintages, and the two copies silently
+    desynced the moment a scenario scaled one of them (the `tight` scenario multiplied
+    demand_ai's HBM GB by 1.15 and left the vintage table behind). The duplication was
+    removed; this guard keeps it from coming back. The vintage table owns power and
+    performance; demand_ai.yaml owns memory content."""
     vintages = a.group("gpu_fleet.vintages")
-    series = a.series("demand_ai.hbm_gb_per_accelerator")
     for year, spec in vintages.items():
-        if year not in series:
-            continue
-        assert spec["hbm_gb"] == series[year], (
-            f"{year}: gpu_fleet says {spec['hbm_gb']}GB, demand_ai says {series[year]}GB"
-        )
+        for banned in ("hbm_gb", "dram_gb"):
+            assert banned not in spec, (
+                f"gpu_fleet.yaml vintage {year} carries '{banned}' -- memory content "
+                f"must live only in demand_ai.yaml, or the two will desync again"
+            )
+    # And the single source must actually exist and cover the vintage years.
+    series = a.series("demand_ai.hbm_gb_per_accelerator")
+    assert series, "demand_ai.hbm_gb_per_accelerator is missing"
 
 
 # ---------------------------------------------------------------------------
@@ -175,13 +179,44 @@ def test_demand_band_does_NOT_collapse_over_history():
     Supply was measured. Demand-at-2025-prices never was -- it is a counterfactual, and
     it is inferred in 2019 exactly as much as in 2031. Collapsing its band over history
     would be claiming to have measured something that never happened.
+
+    This test used to probe 2026Q1 only, and passed for the wrong reason: 2026Q1 sits
+    next to the perturbed 2026 anchor and picks up a sliver of its width by interpolation.
+    Every quarter from 2018 to 2025 was in fact a hairline, which is the exact error the
+    report's own text was calling out. Probe DEEP history, and demand a real width.
     """
     b = uncertainty.run_bands("central")
-    i = b.quarters.index("2026Q1")
-    assert b.demand_p90[i] - b.demand_p10[i] > 0.1, (
-        "the demand band collapsed over history -- but demand at constant prices is "
-        "never observed, so it cannot have zero uncertainty anywhere"
+
+    def rel_width(label):
+        i = b.quarters.index(label)
+        return b.demand_p90[i] / b.demand_p10[i] - 1.0
+
+    for q in ("2019Q1", "2021Q3", "2023Q1", "2025Q2"):
+        assert rel_width(q) > 0.05, (
+            f"the demand band collapsed to a hairline at {q} -- but demand at constant "
+            "2025 prices is never observed, so it cannot be near-certain anywhere"
+        )
+
+    # And it must be of the same ORDER as the near-term forecast band. The claim is not
+    # "history is a bit uncertain", it is "history is inferred exactly as much as 2031".
+    assert rel_width("2019Q1") > 0.5 * rel_width("2027Q4"), (
+        "history is being treated as materially better known than the forecast, which is "
+        "the collapse this test exists to prevent, just slower"
     )
+
+
+def test_supply_band_still_collapses_over_history():
+    """The counterfactual floor must not leak onto the measured side.
+
+    Demand gets a floor because it was never observed. Supply was observed, and giving it
+    an error bar over history would be the mirror-image bug.
+    """
+    b = uncertainty.run_bands("central")
+    for q in ("2019Q1", "2023Q1", "2025Q2", "2026Q1"):
+        i = b.quarters.index(q)
+        assert abs(b.supply_p90[i] - b.supply_p10[i]) < 1e-9, (
+            f"the supply band has width at {q}, which is pinned to observed data"
+        )
 
 
 def test_bands_widen_with_horizon():
@@ -191,3 +226,39 @@ def test_bands_widen_with_horizon():
         i = b.quarters.index(label)
         return b.gap_p90[i] - b.gap_p10[i]
     assert width("2032Q4") > width("2027Q4") > 0, "bands do not widen with horizon"
+
+
+# ---------------------------------------------------------------------------
+# Tornado
+# ---------------------------------------------------------------------------
+def test_tornado_bars_and_baseline_come_from_the_same_run():
+    """A bar drawn against a baseline its own run cannot reproduce is a lie about scale.
+
+    The bars were computed on projection_timeline() while the baseline came from
+    full_timeline(). Same scenario, same quarter, 0.43pp apart -- because a run starting
+    in 2026Q1 gives the GPU fleet no 2018-2025 vintages to retire, and retirement is what
+    drives replacement demand. The visible symptom: levers with NO effect rendered as
+    small bars pointing the wrong way.
+
+    So: any lever whose two arms agree must land exactly on the baseline.
+    """
+    tor = scenarios.tornado("2029Q4")
+    assert tor, "the tornado produced no rows"
+    baseline = tor[0][3]
+
+    inert = [(label, lo) for label, lo, hi, _ in tor if abs(hi - lo) < 1e-12]
+    assert inert, "expected at least one lever with no effect on the 2029Q4 gap"
+    for label, lo in inert:
+        assert abs(lo - baseline) < 1e-9, (
+            f"'{label}' moves the gap by {(lo - baseline) * 100:+.3f}pp when swung both "
+            "ways -- the bars and the baseline are not the same model run"
+        )
+
+
+def test_tornado_baseline_matches_the_charted_central_case():
+    """The reference line has to be the number the reader sees in the gap chart."""
+    tor = scenarios.tornado("2029Q4")
+    charted = scenarios.run("central", full_timeline()).dram_gap_at("2029Q4")
+    assert abs(tor[0][3] - charted) < 1e-9, (
+        "the tornado's baseline is not the gap plotted in the headline chart"
+    )

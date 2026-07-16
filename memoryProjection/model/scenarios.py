@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from . import china, config, demand, supply
-from .calendar import Quarter, full_timeline, projection_timeline
+from .calendar import Quarter, full_timeline
 from .config import Assumptions
 
 
@@ -103,13 +103,20 @@ def run(scenario: str = "central", timeline: list[Quarter] | None = None,
 def tornado(target_quarter: str = "2029Q4", swing: float = 0.25) -> list[tuple[str, float, float, float]]:
     """Sensitivity of the DRAM gap to each slider variable, +/- `swing`.
 
-    Returns (label, gap_low, gap_high, absolute_swing), sorted by how much each input
-    moves the answer. The top of this list is what the whole result actually rests on;
-    everything below it is detail.
+    Returns (label, gap_low, gap_high, baseline), sorted by how much each input moves the
+    answer. Read it for the RANKING, and for the fact that no bar crosses zero: the sign
+    of the result is not an input, it is the model's structure.
+
+    The timeline must be the FULL one, 2018 onwards, even though only 2029Q4 is read out.
+    The GPU fleet accumulates vintage cohorts as it goes, so a run starting at 2026Q1 has
+    no 2018-2025 vintages left to retire -- and the retirement stream is exactly what
+    drives replacement demand. Running the bars on a short timeline while drawing them
+    against a full-timeline baseline put the two 0.43pp apart at 2029Q4, which made the
+    four levers with no effect at all render as small bars pointing the wrong way.
     """
     base = config.load()
     sliders = base.tree["scenarios"]["sliders"]
-    tl = projection_timeline()
+    tl = full_timeline()
 
     baseline = run("central", tl).dram_gap_at(target_quarter)
     rows: list[tuple[str, float, float, float]] = []

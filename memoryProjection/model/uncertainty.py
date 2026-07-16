@@ -1,16 +1,25 @@
 """Uncertainty windows: Monte Carlo over the load-bearing inputs.
 
-Before 2026Q2 the lines are observed and the band has zero width -- not because the
+Before 2026Q2 the SUPPLY line is observed and its band has zero width -- not because the
 model is confident there, but because there is nothing to be uncertain about.
 
-After that, every number is a guess, and a single line would be pretending otherwise.
+The DEMAND line is different, and the difference is the whole reason this module is
+subtle. "Bits the world would consume at constant 2025 prices" was never observed and
+never can be: what actually happened is that price rationed the market and buyers took
+less. So demand is inferred in 2019 exactly as much as in 2031, and its band must not
+collapse over history. See COUNTERFACTUAL below.
 
-Two design choices worth knowing about:
+Three design choices worth knowing about:
 
 1. SPREAD GROWS WITH HORIZON, as sigma * sqrt(years beyond 2026). A 2027 estimate is
    much better than a 2032 one, and a constant-width band would misrepresent that.
 
-2. THE DRAWS ARE CORRELATED. Drawing 13 inputs independently understates the tails
+2. EXCEPT WHERE THE QUANTITY IS UNOBSERVABLE. The counterfactual content inputs carry a
+   floor under that sqrt, so their spread never decays to nothing. Without it the horizon
+   term quietly does the opposite of what this model claims to do: it collapses the
+   demand band onto a number that was never measured, and draws it as if it were fact.
+
+3. THE DRAWS ARE CORRELATED. Drawing 16 inputs independently understates the tails
    badly, because they average out. But the world where AI demand disappoints is the
    SAME world where the datacentre buildout stalls, compute gets cheap, and producers
    over-build. Everything going wrong at once is not a coincidence -- it is what a
@@ -19,6 +28,13 @@ Two design choices worth knowing about:
 
 Read the bands as "roughly how wrong could this be", not as calibrated probabilities.
 The sigmas are judgements, not fitted from data, and the model says so.
+
+WHAT THE BANDS DO NOT COVER: every draw runs the same STRUCTURE, and that structure has
+forward utilisation pinned near maximum and the inventory swing held at zero from 2028.
+Those are the two mechanisms that produced every glut in the backcast. No draw can
+therefore end the shortage, and P(gap closed) reads ~0 in the out-years. That number is a
+property of the model's shape, not evidence about the world. See the report's
+"What this model cannot show you".
 """
 
 from __future__ import annotations
@@ -51,6 +67,20 @@ SUPPLY_CLUSTER = {
     "supply_capacity.dram_wafer_capacity_kwspm.cxmt",
 }
 
+# The inputs that define the COUNTERFACTUAL: how much memory a buyer would have put in a
+# server, a PC, a phone or an accelerator if memory still cost 2025 money. These were
+# never observed -- what was observed is what shipped after price did its rationing -- so
+# their uncertainty does not go to zero as you walk backwards. Everything NOT in this set
+# keeps the honest zero over history: wafers were built and bits were counted.
+#
+# This set is the difference between a demand band and a demand line pretending to be one.
+COUNTERFACTUAL = {
+    "demand_conventional.servers_traditional.dram_gb_per_unit",
+    "demand_conventional.pc.dram_gb_per_unit",
+    "demand_conventional.smartphone.dram_gb_per_unit",
+    "demand_ai.hbm_gb_per_accelerator",
+}
+
 
 @dataclass
 class Band:
@@ -67,10 +97,16 @@ class Band:
     p_gap_closed: list[float]   # P(gap <= 0) -- i.e. the shortage is over
 
 
-def _horizon_scale(q: Quarter, base_year: int = 2026) -> float:
-    """Random-walk widening. Errors accumulate but partially cancel, hence sqrt."""
+def _horizon_scale(q: Quarter, base_year: int = 2026, floor_years: float = 0.0) -> float:
+    """Random-walk widening. Errors accumulate but partially cancel, hence sqrt.
+
+    `floor_years` is the irreducible width carried by the counterfactual inputs, which
+    never had a measured value to collapse onto. For everything else it is zero and this
+    returns zero over history, which is the point: you do not get an error bar on a
+    quarter you have already counted.
+    """
     years = max(q.fractional_year - (base_year + 0.5), 0.0)
-    return math.sqrt(years)
+    return math.sqrt(max(years, floor_years))
 
 
 def _draw_shocks(a: Assumptions, rng: random.Random) -> dict[str, tuple[float, float]]:
@@ -107,9 +143,9 @@ def _draw_shocks(a: Assumptions, rng: random.Random) -> dict[str, tuple[float, f
     return out
 
 
-def _multiplier(sigma: float, z: float, year: int) -> float:
+def _multiplier(sigma: float, z: float, year: int, floor_years: float = 0.0) -> float:
     """Lognormal, mean ~1, spread widening as sqrt(years beyond 2026). Always > 0."""
-    s = sigma * _horizon_scale(Quarter(year, 3))
+    s = sigma * _horizon_scale(Quarter(year, 3), floor_years=floor_years)
     if s <= 0:
         return 1.0
     return math.exp(s * z - 0.5 * s * s)
@@ -123,6 +159,7 @@ def run_bands(scenario: str = "central", timeline: list[Quarter] | None = None,
     base = build_assumptions(scenario)
     n = int(base.scalar("uncertainty.draws"))
     cutoff = actuals_end(base)
+    floor = base.scalar("uncertainty.counterfactual_floor_years")
     rng = random.Random(seed)
 
     sup: list[list[float]] = [[] for _ in tl]
@@ -134,20 +171,29 @@ def run_bands(scenario: str = "central", timeline: list[Quarter] | None = None,
         a = build_assumptions(scenario)
         for path, (sigma, z) in shocks.items():
             asm = a.get(path)
+            # Counterfactual inputs keep a floor under their spread over history; measured
+            # ones do not. See COUNTERFACTUAL above -- this one line is what stops the
+            # demand band collapsing onto a number nobody ever observed.
+            fl = floor if path in COUNTERFACTUAL else 0.0
             if isinstance(asm.value, dict):
                 # Perturb each ANCHOR YEAR by its own horizon-scaled multiplier: 2026 is
-                # nearly known, 2032 is not. History is untouched (the multiplier is
-                # exactly 1 before 2026), because being uncertain about a quarter you
-                # have already measured is not humility, it is a bug.
-                asm.value = {y: v * _multiplier(sigma, z, y) for y, v in asm.value.items()}
+                # nearly known, 2032 is not. For measured inputs history is untouched (the
+                # multiplier is exactly 1 before 2026), because being uncertain about a
+                # quarter you have already counted is not humility, it is a bug.
+                asm.value = {y: v * _multiplier(sigma, z, y, fl) for y, v in asm.value.items()}
             else:
-                asm.value = asm.value * _multiplier(sigma, z, 2029)
+                asm.value = asm.value * _multiplier(sigma, z, 2029, fl)
 
             # A few inputs are fractions and must stay inside their natural bounds no
             # matter what the draw says. You cannot deliver 120% of the datacentres you
-            # announced.
+            # announced, and an annual efficiency gain cannot exceed 100% -- a tail draw
+            # pushing the deflator past 1.0 sends (1 - rate) negative, and a fractional
+            # power of a negative float is a complex number (the same failure class as
+            # the linear-space amplification that once delivered negative gigawatts).
             if path == "datacenter.realisation_rate" and isinstance(asm.value, dict):
                 asm.value = {y: min(v, 0.98) for y, v in asm.value.items()}
+            if path == "demand_ai.efficiency_deflator_annual" and isinstance(asm.value, dict):
+                asm.value = {y: min(v, 0.95) for y, v in asm.value.items()}
 
         ss = supply.supply_series(a, tl)
         dd = demand.demand_series(a, tl)

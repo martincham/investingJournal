@@ -171,7 +171,11 @@ def build_payload() -> dict:
             })
 
     tor = scenarios.tornado("2029Q4")
-    baseline = central.dram_gap_at("2029Q4") * 100
+    # Take the reference line from the tornado's OWN run, not from `central`. Both are the
+    # central case on the full timeline and they now agree -- but deriving the baseline
+    # from the same call that produced the bars is what makes them unable to drift apart
+    # again, which is precisely how they drifted apart last time.
+    baseline = tor[0][3] * 100 if tor else 0.0
 
     annual = {
         y: {k: (round(v, 2) if isinstance(v, float) else v)
@@ -214,6 +218,36 @@ def build_payload() -> dict:
         "annual": annual,
         "audit": audit,
         "history_end": "2025Q4",
+        "headline": headline(runs, band, central),
+    }
+
+
+def headline(runs: dict, band, central) -> dict:
+    """The numbers the lede quotes.
+
+    Derived, never typed by hand. A summary card with hardcoded figures is a summary card
+    that silently stops being true the first time an assumption moves, and it is the part
+    of the page most likely to be read and least likely to be re-checked.
+    """
+    i29 = band.quarters.index("2029Q4")
+    fl = fleet_payload(central)
+    gw_now = fl["fleet_power_gw"][fl["quarters"].index("2026Q1")]
+    gw_end = fl["fleet_power_gw"][-1]
+    # Same accessor as the charted `dram_deficit` series -- quarterly EB, annualised.
+    deficit = next(b.deficit_eb * 4 for b in central.dram if b.quarter_label == "2029Q4")
+    return {
+        "gap_2026q4": runs["central"].dram_gap_at("2026Q4") * 100,
+        "gap_2029q4": runs["central"].dram_gap_at("2029Q4") * 100,
+        "gap_tight": runs["tight"].dram_gap_at("2029Q4") * 100,
+        "gap_loose": runs["loose"].dram_gap_at("2029Q4") * 100,
+        "gap_p10": band.gap_p10[i29],
+        "gap_p90": band.gap_p90[i29],
+        "deficit_2029q4_eb": deficit,
+        "fleet_gw_2032": gw_end,
+        "fleet_multiple": gw_end / gw_now if gw_now else 0.0,
+        "p_closed_max_outyear": max(
+            band.p_gap_closed[band.quarters.index("2028Q1"):]) * 100,
+        "draws": int(config.load().scalar("uncertainty.draws")),
     }
 
 
