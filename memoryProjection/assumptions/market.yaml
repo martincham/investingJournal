@@ -1,0 +1,92 @@
+# The industry DRAM price layer (Nov 2026). Inputs for model/market.py.
+#
+# Price starts from the last OBSERVED quarter (actuals_end: revenue / bits) and moves each
+# quarter with the gap at the going price -- demand at that price vs supply, net of the
+# model's baseline offset. Demand at the going price comes from the two demand lines
+# (2025 prices and 2026Q3 prices), which give a per-quarter elasticity. Buyers' budgets
+# cap it: cloud providers cannot spend more on DRAM than a share of their capex.
+#
+# Everything is in real 2025 dollars, the same basis as the demand definition.
+# Projection only: observed quarters are reported as observed.
+
+baseline_offset:
+  value: 0.05
+  unit: fraction
+  source: DERIVED
+  confidence: medium
+  notes: >
+    The model's unrationed demand already exceeds observed supply by +5.6% in 2025Q1
+    and +8.4% in 2025Q2, when blended prices rose only 2-5%. Treated as a level error in
+    the demand build, not as a signal: price moves only on the gap ABOVE this.
+
+price_change_guide_first_projected_quarter:
+  value: 0.15
+  unit: fraction_qoq
+  source: https://www.trendforce.com/presscenter/news/20260930-13258.html
+  confidence: medium
+  notes: >
+    Calibrates the adjustment speed. TrendForce (2026-09-30): 4Q26 conventional DRAM
+    contract +10-15% QoQ; a later TrendForce News note has blended DRAM ~+20%. The
+    speed is solved so the first projected quarter moves by this much from the observed
+    gap in the last observed quarter. One target, one parameter.
+
+gross_margin_at_anchor:
+  value: 0.87
+  unit: fraction
+  source: https://investors.micron.com/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf
+  confidence: medium
+  notes: >
+    Industry DRAM gross margin in the anchor quarter (2026Q3). Micron FQ4-26 non-GAAP
+    gross margin 87.0% (Jun-Aug 2026, DRAM and NAND); SK hynix 3Q26 operating margin 80%,
+    which implies a gross margin in the high 80s. Sets cost per GB at the anchor.
+    Check against guidance: Micron guides FQ1-27 (Sep-Nov) to 86.25% as the FY27 floor,
+    with "higher gross margins beyond fiscal Q1" and "more moderate" price increases.
+
+wafer_cost_index:
+  value: {2026: 1.0, 2032: 1.0}
+  unit: index_real
+  source: USER_INPUT
+  confidence: low
+  notes: >
+    Real cost per DRAM wafer relative to the anchor. Held flat: cost per GB then falls
+    with bits per wafer (node migration) and rises with the HBM wafer share. Rising
+    depreciation from the 2027-28 cleanroom build would push this up; not modelled yet.
+
+csp_capex_nominal_2027_usd_bn:
+  value: 1500
+  unit: billions_usd
+  source: https://iconnect007.com/article/151981/csp-capex-to-exceed-us15t-in-2027-as-ai-server-revenue-surges/151978/smt
+  confidence: medium
+  notes: >
+    TrendForce (2026-10-14): nine major CSPs, >$1.5tn in 2027 (+60%). Other years scale
+    with demand_ai.hyperscaler_capex_usd_bn (real) relative to its 2027 value.
+
+memory_share_of_csp_capex_max:
+  value: 0.68
+  unit: fraction
+  source: https://www.trendforce.com/presscenter/news/20260825-13198.html
+  confidence: low
+  notes: >
+    TrendForce (2026-08-25): DRAM plus NAND at 47% of major CSP capex in 2026 and 68% in
+    2027. Used as the ceiling: CSPs do not spend a larger share than this on memory. The
+    definition is not given and may be hardware capex rather than total.
+
+dram_share_of_memory_spend:
+  value: 0.67
+  unit: fraction
+  source: https://www.trendforce.com/presscenter/news/20260818-13186.html
+  confidence: medium
+  notes: >
+    DRAM's share of DRAM + NAND revenue in 2Q26: DRAM $154.73bn vs NAND ~$75bn (top
+    five $68.87bn plus the rest).
+
+gross_margin_floor:
+  value: -0.33
+  unit: fraction
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Price never falls below cost / (1 - this). Micron ran a -32.7% gross margin in the
+    2023 glut, the deepest in memory history (see micronProjection upstream notes).
+    Below that, producers cut wafer starts (2023 utilisation fell to ~76%) rather than
+    sell lower. The supply line does not respond; the floor stands in for that.

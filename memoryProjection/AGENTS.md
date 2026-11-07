@@ -73,6 +73,7 @@ Tables (all keyed by `scenario` ∈ {tight, central, loose} and usually `quarter
 | `power_pipeline` | announced→delivered datacentre GW (slip, cancellation, grid ceiling) |
 | `capex_crosscheck` | can the world afford the accelerators demand implies (the top-down check) |
 | `tornado` | sensitivity: gap_low/gap_high per slider, ranked |
+| `market` | industry DRAM price, cost, gross margin, shipped EB, revenue per quarter (see price layer below) |
 | `assumption` | **every input flattened**: `key`, `value_json`, `unit`, `source`, `confidence`, `notes` |
 | `run_meta` | key/value: generation time, `actuals_end` (2026Q3), timeline, confidence audit |
 
@@ -83,6 +84,27 @@ when summing end-demand).
 
 Everything at/before **2026Q3 is observed data** (`is_actual=1`), overrides the model, and
 carries no supply uncertainty band. Do not "correct" an actual against the model.
+
+## The price layer: industry DRAM price, margin, revenue (Nov 2026)
+
+Table `market` (per scenario × quarter), from `model/market.py` and `assumptions/market.yaml`.
+Real 2025 $/GB. Starts at the observed anchor quarter (`actuals_end`: revenue ÷ bits) and
+moves each quarter by `kappa × (gap at the going price − baseline_offset)`. Demand at the
+going price uses the elasticity implied by the two demand lines (~−0.1). `kappa` is solved
+once on central so that 2026Q4 = TrendForce's +15% guide, stored in `run_meta.market_kappa`,
+and shared by every scenario. Caps: cloud providers' DRAM spend ≤ 68% × 67% of their capex
+(TrendForce), and price ≥ cost / 1.33 (Micron's 2023 trough margin). Cost per GB is anchored
+at an 87% margin in 2026Q3 and falls with bits per wafer.
+
+Why a path and not a clearing price: at elasticity −0.1, a 5% quantity error moves the
+clearing price ~60%, so the level can't be read off this model's quantities. The path is
+checked, not fitted, against Micron's FY27 guide (86.25% floor, rising): central 2027
+margins come out at 88–90%.
+
+Read with care: the price layer never feeds back into supply or demand. **Loose collapses
+to the cost floor from 2028 and stays there**, because loose supply jumps above demand
+straight after the observed data and the model has no supply cut to end a glut. Treat loose
+prices as "a glut is possible", not as a path.
 
 ## Vintages: earlier projections, frozen
 
@@ -95,7 +117,7 @@ never `report/`, so re-running here cannot move its numbers until it is repointe
 ## Re-running the model (only when you changed an input)
 
 ```bash
-./.venv/bin/python -m pytest tests/ -q     # 59 tests — the overclaim guard; run first
+./.venv/bin/python -m pytest tests/ -q     # 66 tests — the overclaim guard; run first
 ./.venv/bin/python -m report.build         # -> report/memory_model.html
 ./.venv/bin/python -m report.export        # -> report/memory_model.sqlite (re-query after this)
 ./.venv/bin/python -m report.freeze YYYY-MM # -> vintages/YYYY-MM/ (only to publish a new projection)

@@ -31,7 +31,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
-from model import config, scenarios, units, uncertainty
+from model import config, market, scenarios, units, uncertainty
 from model.actuals import actuals_end
 from model.calendar import full_timeline
 from model.datacenter import power_series
@@ -92,6 +92,21 @@ CREATE TABLE demand_segment (
     segment  TEXT NOT NULL,               -- hbm, ai_server_host, pc, inventory, ...
     demand_eb REAL NOT NULL,              -- per quarter; inventory can be negative
     PRIMARY KEY (scenario, quarter, product, segment)
+);
+
+CREATE TABLE market (                      -- Nov 2026: industry DRAM price layer, model/market.py
+    scenario TEXT NOT NULL,
+    quarter  TEXT NOT NULL,
+    is_actual INTEGER NOT NULL,           -- 1 = observed revenue and bits
+    price_usd_per_gb REAL NOT NULL,       -- real 2025 dollars
+    cost_usd_per_gb REAL,                 -- anchor quarter and projections only
+    gross_margin REAL,                    -- fraction; anchor quarter and projections only
+    shipped_eb REAL NOT NULL,
+    revenue_usd_bn REAL NOT NULL,         -- per quarter
+    gap_at_model_price REAL,              -- demand at this price / supply - 1
+    budget_bound INTEGER,                 -- 1 = CSP DRAM budget ceiling set the price
+    price_ceiling_usd_per_gb REAL,
+    PRIMARY KEY (scenario, quarter)
 );
 
 CREATE TABLE demand_segment_at_price (     -- Nov 2026: same layout, at-current-prices line
@@ -199,6 +214,7 @@ def export(db_path: Path = DB) -> Path:
     tl = full_timeline()
     runs = {s: scenarios.run(s, tl) for s in SCENARIOS}
     a_central = runs["central"].assumptions
+    kappa = market.calibrate_kappa(runs["central"])   # one market speed for every scenario
 
     db_path.unlink(missing_ok=True)
     con = sqlite3.connect(db_path)
@@ -211,6 +227,7 @@ def export(db_path: Path = DB) -> Path:
             ("generated_utc", datetime.now(timezone.utc).isoformat(timespec="seconds")),
             ("actuals_end", actuals_end(a_central).label),
             ("timeline", f"{tl[0].label}..{tl[-1].label}"),
+            ("market_kappa", f"{kappa:.4f}"),
             ("scenarios", ",".join(SCENARIOS)),
             ("confidence_audit", json.dumps(audit)),
             ("units_note", "EB per quarter unless column name says _yr/_gw; gaps are fractions"),
@@ -262,6 +279,14 @@ def export(db_path: Path = DB) -> Path:
                     at_rows.append((name, d.quarter.label, product, seg,
                                     units.bits_to_eb(bits)))
         con.executemany("INSERT INTO demand_segment_at_price VALUES (?,?,?,?,?)", at_rows)
+
+        con.executemany(
+            f"INSERT INTO market VALUES ({','.join('?' * 11)})",
+            [(name, m.quarter.label, int(m.is_actual), m.price_usd_per_gb, m.cost_usd_per_gb,
+              m.gross_margin, m.shipped_eb, m.revenue_usd_bn, m.gap_at_model_price,
+              int(m.budget_bound), m.price_ceiling_usd_per_gb)
+             for m in market.market_series(run, kappa)],
+        )
 
         con.executemany(
             f"INSERT INTO fleet VALUES ({','.join('?' * 13)})",
