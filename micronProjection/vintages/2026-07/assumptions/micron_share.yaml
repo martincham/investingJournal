@@ -1,0 +1,118 @@
+# Micron's slice of the industry's bits.
+#
+# memoryProjection has no `micron_bits` column and never will: supply.py sums the
+# per-producer wafer capacities into `installed_kwspm` on its first line and pools
+# everything from there. Only CXMT survives as a separate fraction, because the model
+# needs it to net out captive Chinese bits.
+#
+# So Micron's bits must be rebuilt from the per-producer capacity INPUTS, which do
+# survive in upstream's flattened `assumption` table. We express Micron's output as a
+# SHARE of upstream's emitted bits rather than re-deriving bits from wafers -- upstream's
+# supply has already been through the min() over C1-C6, utilisation, node-conversion
+# loss and the disruption haircut, and re-deriving would quietly diverge from the input
+# we are supposed to be taking as given.
+
+# ---------------------------------------------------------------------------
+# The density premium. The whole 19% -> 22% reconciliation lives in this number.
+# ---------------------------------------------------------------------------
+density_premium_vs_row_blend:
+  value: {2018: 0.92, 2020: 0.94, 2021: 0.96, 2023: 1.00, 2024: 1.05,
+          2025: 1.10, 2026: 1.11, 2028: 1.10, 2032: 1.08}
+  unit: ratio
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Micron's bits per wafer relative to the ex-China blend it competes in. Upstream's
+    dram_gb_per_wafer is an industry blend by construction, so any single producer sits
+    above or below it depending on where it is in the node race.
+
+    THE SHAPE IS THE POINT, and it crosses 1.0 around 2023. A first cut had this decaying
+    from 1.07 -- i.e. assuming Micron always led -- and it put Micron at 26.9% of 2020
+    DRAM bits against a real ~23.5%. The error was not the size of the premium but its
+    sign in the early years:
+
+      2018-2021 (below 1): Micron was roughly a node behind Samsung and SK Hynix. Its
+        1z/1-alpha ramps landed late, so its bits per wafer trailed the blend it is
+        measured against. This is the era that ends with the 2021-22 catch-up.
+      2023 (at 1): parity, as 1-alpha/1-beta close the gap.
+      2024-2026 (above 1): Micron leads on 1-beta/1-gamma and carries no legacy tail,
+        while the ex-China blend still averages in Samsung's and SK's older nodes plus
+        the ~75 kwspm Nanya/Winbond `other` bucket.
+      2028-2032 (drifting back toward 1): the lead narrows. Upstream ramps
+        cxmt_density_discount 0.62 -> 0.82 and the laggards converge. Micron does not
+        get to compound a density advantage for eight years, and assuming it did would
+        be the single easiest way to make this model quietly bullish.
+
+    NOT A FREE PARAMETER. Pinned at both ends by disclosed_bit_share below (~23.5% of
+    DRAM bits in 2020, ~22% in 2025) and cross-checked by test_micron_bit_growth_matches
+    _reported (+~30% YoY over the first nine months of FY2026). Two independent anchors,
+    one series. If it has to bend far to satisfy them, the share construction is wrong
+    and this is not the place to fix it.
+
+# ---------------------------------------------------------------------------
+# HBM. Micron's own wafer allocation, NOT the industry's.
+# ---------------------------------------------------------------------------
+hbm_wafer_share_of_own_wafers:
+  value: {2018: 0.0, 2020: 0.004, 2022: 0.018, 2023: 0.028, 2024: 0.090,
+          2025: 0.200, 2026: 0.255, 2027: 0.335, 2028: 0.395, 2029: 0.435,
+          2030: 0.480, 2031: 0.510, 2032: 0.525}
+  unit: fraction_of_own_dram_wafer_starts
+  source: DERIVED
+  confidence: low
+  notes: >
+    DENOMINATOR WARNING: upstream's tech_roadmap.hbm_wafer_share is a fraction of
+    EX-CHINA wafer starts (supply.py:192 -- CXMT makes no HBM: no EUV, no advanced
+    packaging, no HBM customers). This series must use the same basis or the two models
+    silently disagree about how much HBM exists.
+
+    Set fractionally BELOW upstream's ex-China share (2025: 0.200 vs 0.218; 2026: 0.255
+    vs 0.261) because SK Hynix leads HBM allocation and Micron entered later; Micron's
+    HBM share of bits has been running below its DRAM share of bits. The gap narrows as
+    Micron's HBM3E/HBM4 ramps land.
+
+    Low confidence and it matters: HBM trades ~2.85-3.3 wafers per commodity bit, so
+    this single series drives both Micron's bit count DOWN and its revenue and cost per
+    bit UP. It is a top-3 tornado input; do not read the out-years as precise.
+
+# ---------------------------------------------------------------------------
+# The disclosed anchor. A diagnostic, never a correction.
+# ---------------------------------------------------------------------------
+disclosed_bit_share:
+  value: {2020: 0.235, 2025: 0.22}
+  unit: fraction
+  source: https://www.trendforce.com/presscenter/news/20260226-12937.html
+  confidence: medium
+  notes: >
+    The two anchors the density premium is calibrated against. Deliberately only two,
+    and deliberately far apart: they bracket the node-race reversal, so together they
+    pin the premium's LEVEL and its SLOPE. Adding more would be fitting noise.
+
+    2025 (~22%): cited in memoryProjection/assumptions/actuals.yaml, where it is one of
+    three independent corroborations of the industry's ~39 EB/yr bit level ("Micron's
+    ~22% bit share against its own disclosed output"). Using it here means our share and
+    upstream's bit level rest on the same fact, which is a feature -- they cannot drift
+    apart silently.
+    2020 (~23.5%): TrendForce's 2020 DRAM revenue shares (Samsung 41.7 / SK 29.4 /
+    Micron 23.5). Revenue share is a proxy for bit share and holds only while a
+    producer's ASP is near the industry blend -- true for Micron in 2020, when its mix
+    was almost entirely commodity. It would NOT be a safe proxy in 2025, when HBM
+    distorts realised ASP across producers, which is exactly why the later anchor is the
+    disclosed bit figure rather than a revenue share.
+
+    Emitted every quarter in the share_reconciliation table against the modelled share,
+    so the calibration stays visible and arguable instead of being taken on trust.
+
+nand_bit_share:
+  value: {2018: 0.11, 2020: 0.115, 2023: 0.12, 2025: 0.125, 2028: 0.13, 2032: 0.13}
+  unit: fraction
+  source: DERIVED
+  confidence: low
+  notes: >
+    Micron's share of industry NAND bits, applied directly to upstream's NAND supply.
+    Coarser treatment than DRAM on purpose: NAND is ~15-20% of Micron's revenue, and
+    upstream's own README calls its NAND line the unreliable one (it shows NAND
+    balanced while 2026 NAND is sold out and prices have doubled; the backcast gate over
+    there is DRAM-only). A more elaborate NAND share would be false precision layered on
+    a line its own author distrusts.
+    Derived from Micron's ~180 of ~1,450 kwspm NAND wafer capacity, adjusted up for a
+    layer-count edge over the Chinese entrants.

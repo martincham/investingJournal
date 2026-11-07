@@ -1,0 +1,87 @@
+# Company guidance and near-term analyst consensus.
+#
+# The seam in this model used to be binary: reported, then fitted. That threw away a real
+# category of information sitting between them. Micron has GUIDED FQ4'26, and a guide from
+# the company two months into the quarter is worth more than a response fitted at R2 = 0.53
+# extrapolating 2x beyond its range. So the pin now runs:
+#
+#   reported (<= FQ3'26)  ->  guided (FQ4'26, FQ1'27)  ->  fitted (FQ2'27 on)
+#
+# Guidance is NOT reported data and is marked separately from it everywhere -- `is_actual`
+# stays false for these quarters, and the report shows them as their own band. It is a
+# third state, not a promotion to fact.
+
+guidance_end:
+  value: 2026Q4
+  unit: quarter
+  source: USER_INPUT
+  confidence: high
+  notes: >
+    Last CALENDAR quarter carrying guidance. Beyond this the fitted response takes over.
+    2026Q4 is Micron's fiscal Q1 2027 -- the second of the two quarters the +17%/quarter
+    price consensus covers.
+
+fq4_2026_revenue_usd_bn:
+  value:
+    central: 51.0
+    tight: 55.0
+    loose: 49.0
+  unit: billions_usd
+  source: USER_INPUT
+  confidence: medium
+  notes: >
+    Micron's fiscal Q4 2026 (calendar 2026Q3, quarter ending ~3 Sep 2026).
+
+    The company guided ~$50bn. Central is set at 51.0 rather than 50.0 because Micron has
+    beaten its own guide in every quarter of this up-cycle, and in a market where price is
+    the swing factor a guide set mid-quarter is a floor more often than a midpoint.
+    The 49-55 range is the beat/miss spread, NOT the bit-scenario spread -- see the note
+    below, because the two are different axes and mapping one onto the other is a
+    simplification.
+
+    MAPPING TO SCENARIOS. tight/central/loose here are upstream's BIT scenarios, while
+    high/central/low is a REVENUE range for one quarter. They are not the same
+    uncertainty. They are mapped onto each other because at one quarter out the bit lines
+    have barely diverged (upstream's scenarios differ by <2% of bits in 2026Q3), so
+    substantially all of the near-term spread is price and demand timing, not supply.
+    That is defensible for FQ4'26 and would NOT be for FY2029.
+
+price_rise_per_quarter_next_2q:
+  value: 0.17
+  unit: fraction_qoq
+  source: USER_INPUT
+  confidence: medium
+  notes: >
+    Analyst consensus for memory CONTRACT price rises: ~+17% PER QUARTER (confirmed: each
+    quarter rises 17%, so ~+37% compounded), applied to calendar 2026Q3 and 2026Q4
+    (fiscal Q4'26 and Q1'27).
+
+    CONTRACT PRICE IS NOT REALISED ASP, and the two numbers in this file only agree once
+    that is said out loud. FQ3'26 revenue was $41.5bn; the guided ~$51bn for FQ4 is +23%
+    QoQ. Our price-equivalent bits grow +6.0% in that quarter, so the guide implies
+    REALISED ASP of about +10.8% QoQ -- well below the +17% contract figure.
+
+    That gap is the contract-to-realised lag, and it is documented rather than invented:
+    memoryProjection's own actuals.yaml makes the same point about the same period
+    ("realised blended ASP lags them (older contracts roll over gradually, and the mix
+    shifts)"), and sets its realised series a few points under the headline contract
+    numbers for exactly this reason. Micron's back book reprices over several quarters,
+    so a +17% contract move shows up as ~+11% realised in the quarter it lands and keeps
+    feeding through afterwards.
+
+    HONEST CORRECTION: an earlier version of this note claimed the guide and the consensus
+    "independently cross-check" each other at ~+18%. That arithmetic assumed ~4% bit
+    growth; the model says 6%, and the implied realised ASP is +10.8%, not +18%. They are
+    CONSISTENT via the lag, which is a weaker and more accurate claim than a cross-check.
+
+    WHAT IT OVERRIDES, and why that is the right call: the fitted response left to itself
+    projects realised ASP roughly FLAT across these two quarters (11.37 -> 11.39 -> 11.06
+    $/GB). It is fitted at R2 = 0.53 and extrapolating ~2x beyond its range here. A company
+    guide and a price consensus are better information about the next two quarters than
+    that. Past them there is no guidance and the fitted response is all there is.
+
+    KNOWN WART: FQ1'27 applies the full +17% to REALISED ASP, while FQ4 gets ~+11% realised
+    off the same +17% contract move. That is defensible -- the back book keeps repricing,
+    so realised catches up as the rises accumulate -- but it is not derived, and FQ1'27 is
+    the least-supported quarter in the model. FQ4 is pinned by revenue and does not depend
+    on it.

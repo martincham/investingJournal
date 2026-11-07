@@ -1,0 +1,62 @@
+# China: modelled as a CAPTIVE region.
+#
+# The correction that drives this file: CXMT's output is fully booked domestically.
+# Chinese memory supply serves Chinese memory demand. If CXMT exported westward it
+# would be a REALLOCATION of where bits are consumed, not net new bits into a hungry
+# world -- those bits would simply stop serving a Chinese buyer who would then have
+# to buy them from Samsung/SK/Micron instead.
+#
+# The structural consequence, which is easy to get wrong and is worth stating
+# plainly: a CXMT ramp CANNOT close the global gap. It adds to global supply and to
+# global demand-served by exactly the same amount. Models that count CXMT wafers as
+# global supply relief without also removing the Chinese demand those wafers absorb
+# are double-counting, and they will show a shortage ending that never ends.
+#
+# The model asserts this as a property (see tests/): varying captive_share must leave
+# the GLOBAL gap unchanged and move only the regional split.
+
+captive_share:
+  value: 1.0
+  unit: fraction
+  source: USER_INPUT
+  confidence: medium
+  notes: >
+    Fraction of Chinese-produced memory bits absorbed by Chinese domestic demand.
+    Default 1.0 = fully captive. Dial below 1.0 to let CXMT/YMTC leak into the
+    merchant market: the ADDRESSABLE (ex-captive) supply rises, Chinese domestic
+    demand is then served by imports instead, and the global gap does not move. That
+    invariance is the point, and it is exposed as a slider so the behaviour can be
+    demonstrated rather than asserted.
+
+domestic_dram_demand_eb_per_year:
+  value: {2018: 3.5, 2020: 5.0, 2022: 6.8, 2024: 8.5, 2025: 9.6, 2026: 10.8,
+          2027: 12.0, 2028: 13.3, 2029: 14.6, 2030: 16.0, 2031: 17.4, 2032: 18.8}
+  unit: exabytes_per_year
+  source: DERIVED
+  confidence: low
+  notes: >
+    Chinese domestic DRAM consumption: handset OEMs (Xiaomi, Oppo, Vivo, Honor,
+    Transsion), domestic servers, PCs, EV/auto, plus the domestic AI accelerator
+    build (Huawei Ascend et al.). Roughly 22-25% of world DRAM demand, consistent
+    with China's share of global electronics assembly. This is the demand pool that
+    CXMT's output is netted against.
+
+domestic_nand_demand_eb_per_year:
+  value: {2018: 120, 2020: 190, 2022: 260, 2024: 330, 2025: 380, 2026: 440,
+          2027: 500, 2028: 570, 2029: 640, 2030: 720, 2031: 800, 2032: 880}
+  unit: exabytes_per_year
+  source: DERIVED
+  confidence: low
+  notes: Same logic for NAND; YMTC is the domestic supplier being netted.
+
+policy_risk:
+  export_control_tightening:
+    value: 0.0
+    unit: fraction_capacity_impaired
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      Cuts both ways and is left at zero in the base case rather than guessed.
+      Tighter controls on DUV/parts would impair CXMT's ramp (raises the ex-China
+      gap indirectly by raising Chinese import demand); looser controls or successful
+      domestic toolmaking would accelerate it. A scenario lever.

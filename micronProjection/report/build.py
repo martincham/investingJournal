@@ -26,6 +26,7 @@ from plotly.offline import get_plotlyjs
 
 from model import pnl
 from model.conf import load
+from model.upstream import sha256, sqlite_path
 from model.vendor.calendar import Quarter
 
 HERE = Path(__file__).resolve().parent
@@ -309,7 +310,8 @@ def build() -> Path:
         for name, fig, note in figs
     )
 
-    html = TEMPLATE.format(plotlyjs=get_plotlyjs(), body=body, thead=thead, tbody=tbody)
+    upstream = f"{a.value('upstream.sqlite_path')} (sha256 {sha256(sqlite_path(a))[:12]})"
+    html = TEMPLATE.format(plotlyjs=get_plotlyjs(), body=body, thead=thead, tbody=tbody, upstream=upstream)
     OUT.write_text(html)
     return OUT
 
@@ -428,7 +430,7 @@ fitted. The table view is also the accessibility relief for the chart palette.</
 
 <footer>
 Built from SEC EDGAR XBRL (companyfacts, CIK 0000723125) and
-memoryProjection/report/memory_model.sqlite. Regenerate:
+{upstream}. Regenerate:
 <code>./.venv/bin/python -m report.build</code>
 </footer>
 </body></html>

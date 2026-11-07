@@ -1,0 +1,141 @@
+# C1-C6: the six candidate bottlenecks. Supply is min() over these, and the model's
+# job is to report WHICH ONE binds in each quarter.
+#
+# Two families, because they bite in different places:
+#
+#   WAFER CEILINGS (C1, C2, C3) cap total DRAM wafer starts.
+#   HBM CEILINGS  (C4, C5, C6) cap HBM bits specifically -- and note the consequence:
+#     if an HBM ceiling binds, the freed wafers flow back to commodity DRAM, which is
+#     ~2.85x more bit-efficient. So an HBM back-end bottleneck RAISES total DRAM bits
+#     while leaving AI demand unserved. Total-bit supply and AI-served supply have
+#     different bottlenecks, and the model reports both.
+
+# --- C2: Lithography (the "ASML is the limiting factor" hypothesis) -------------
+#
+# This is the claim worth actually testing rather than assuming. The arithmetic:
+# an NXE:3600D runs ~160 wafers/hour; at ~90% uptime that is ~104,000 wafer-LAYERS
+# per month. DRAM at 1-2 EUV layers therefore gets ~52-104 kWSPM of support from a
+# SINGLE scanner. Memory's installed EUV fleet is dozens of scanners. The ceiling
+# this produces sits far above installed DRAM capacity, so on these numbers EUV does
+# not bind DRAM today -- most DRAM is still DUV multipatterning, and NAND is
+# essentially EUV-free.
+#
+# It can start to bite late in the horizon, when EUV layer counts per wafer rise
+# faster than the fleet does. Whether that happens is what C2 exists to answer.
+litho:
+  euv_scanners_available_to_memory:
+    value: {2018: 2, 2020: 8, 2022: 20, 2024: 34, 2025: 45, 2026: 58, 2027: 72,
+            2028: 88, 2029: 104, 2030: 120, 2031: 136, 2032: 152}
+    unit: cumulative_scanners
+    source: https://www.sec.gov/Archives/edgar/data/937966/000162828026011377/asml-2025xannualxreportx.htm
+    confidence: low
+    notes: >
+      Cumulative EUV fleet in memory hands. ASML ships ~50-60 EUV systems a year
+      across all customers and logic takes the majority, so memory's share is
+      assumed ~30-35% of shipments, accumulating. Applies to ex-China DRAM only --
+      CXMT has no EUV access under export controls (see china.yaml).
+  wafer_layers_per_scanner_month:
+    value: 104000
+    unit: wafer_layers_per_month
+    source: DERIVED
+    confidence: medium
+    notes: ~160 wph x 24h x 30d x 0.90 availability.
+  euv_layers_per_dram_wafer:
+    value: {2020: 1, 2022: 1, 2024: 1.5, 2025: 2, 2026: 2, 2027: 3, 2028: 3.5,
+            2029: 4, 2030: 5, 2031: 5.5, 2032: 6}
+    unit: layers
+    source: DERIVED
+    confidence: low
+    notes: >
+      1gamma runs ~1-2 EUV layers. Rising sharply through 1delta/0a. This is the term
+      that decides whether C2 ever binds: the fleet grows roughly linearly while
+      layers-per-wafer also grows, so the ceiling can flatten even as scanners arrive.
+  euv_dependent_share_of_dram_wafers:
+    value: {2018: 0.0, 2019: 0.0, 2020: 0.03, 2021: 0.08, 2022: 0.15, 2023: 0.22,
+            2024: 0.32, 2025: 0.42, 2026: 0.50, 2027: 0.58, 2028: 0.66, 2029: 0.72,
+            2030: 0.78, 2031: 0.83, 2032: 0.87}
+    unit: fraction
+    source: DERIVED
+    confidence: low
+    notes: >
+      CRITICAL to getting C2 right, and the thing a naive EUV-bottleneck model gets
+      wrong. Most DRAM wafers do not touch an EUV scanner at all: DRAM only began
+      using EUV around 2020 (Samsung 1z/1alpha), and legacy nodes, DDR4, niche DRAM
+      and every CXMT wafer are still pure DUV multipatterning. Only this fraction of
+      wafers is exposed to the EUV ceiling; the rest is capped by cleanroom and etch,
+      not by ASML. Set to 0 before 2020, which is why the 2018-19 backcast must not
+      show litho binding.
+
+# --- C3: Non-litho WFE (HAR etch / depo / implant) ------------------------------
+# Lam, TEL, AMAT. For DRAM this is generally slack. For 3D NAND it is the real
+# scaling constraint -- stacking to 1000 layers is an etch problem, not a litho one.
+other_wfe:
+  dram_supportable_kwspm:
+    value: {2018: 1600, 2020: 1800, 2022: 2050, 2024: 2300, 2025: 2500, 2026: 2750,
+            2027: 3000, 2028: 3300, 2029: 3600, 2030: 3900, 2031: 4200, 2032: 4500}
+    unit: kwspm
+    source: DERIVED
+    confidence: low
+    notes: >
+      Ceiling on DRAM wafer starts supportable by non-litho tool deliveries. Set
+      above installed capacity throughout: WFE has generally been orderable ahead of
+      cleanroom availability. If this is wrong it is wrong in the direction of the
+      model being too optimistic on supply.
+  nand_supportable_kwspm:
+    value: {2018: 1400, 2022: 1600, 2025: 1700, 2026: 1800, 2028: 2000, 2030: 2200, 2032: 2400}
+    unit: kwspm
+    source: DERIVED
+    confidence: low
+
+# --- C1: Cleanroom / installed wafer capacity -----------------------------------
+# Not given a ceiling here -- it IS supply_capacity.yaml. Listed so the constraint
+# stack is complete and C1 can be named as the binding factor when it is.
+
+# --- C4: HBM back-end (TSV, thinning, TC-NCF / MR-MUF bonding, KGD) --------------
+hbm_backend:
+  max_hbm_bits_eb_per_year:
+    value: {2023: 0.6, 2024: 1.6, 2025: 3.6, 2026: 5.2, 2027: 7.5, 2028: 10.5,
+            2029: 14.0, 2030: 18.0, 2031: 22.5, 2032: 27.0}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+    notes: >
+      Stacking/bonding throughput. Set slightly above the wafer-implied HBM output so
+      it is close to binding but usually not the gate -- back-end tooling has shorter
+      lead times than a fab shell, so producers have been able to chase it. Worth
+      watching: it is the cheapest bottleneck to relieve, which cuts AGAINST any
+      thesis that assumes the HBM shortage is structural.
+
+# --- C5: Test (Advantest / Teradyne) ---------------------------------------------
+test:
+  max_hbm_bits_eb_per_year:
+    value: {2023: 0.7, 2024: 1.8, 2025: 3.8, 2026: 5.0, 2027: 7.0, 2028: 9.8,
+            2029: 13.0, 2030: 17.0, 2031: 21.0, 2032: 25.0}
+    unit: exabytes_per_year
+    source: DERIVED
+    confidence: low
+    notes: >
+      HBM test time runs 3-5x commodity DRAM per bit, and 16-hi HBM4 makes it worse.
+      An underrated gate -- tester capacity is a real, physical, purchasable thing
+      that the industry has repeatedly under-ordered.
+
+# --- C6: Advanced packaging (TSMC CoWoS) -----------------------------------------
+# Gates how much HBM can be CONSUMED, regardless of how much is made. An HBM stack
+# with no interposer to sit on is inventory, not supply.
+advanced_packaging:
+  cowos_wafers_kwpm:
+    value: {2023: 15, 2024: 35, 2025: 70, 2026: 110, 2027: 150, 2028: 190,
+            2029: 230, 2030: 270, 2031: 300, 2032: 330}
+    unit: thousand_wafers_per_month
+    source: DERIVED
+    confidence: low
+    notes: TSMC CoWoS-L/-S capacity. The most-watched number in the AI supply chain.
+  accelerators_per_cowos_wafer:
+    value: {2024: 28, 2026: 24, 2028: 20, 2030: 17, 2032: 15}
+    unit: units
+    source: DERIVED
+    confidence: low
+    notes: >
+      Falling because accelerator packages keep getting physically bigger (more
+      reticles, more HBM stacks per package), so each interposer wafer yields fewer
+      of them. This is why CoWoS capacity has to grow fast just to stand still.

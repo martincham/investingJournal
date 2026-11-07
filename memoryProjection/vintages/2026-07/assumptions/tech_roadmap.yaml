@@ -1,0 +1,130 @@
+# S18-S25: bit density per wafer, the HBM trade-ratio, and the 3D DRAM regime break.
+#
+# This file contains the single highest-leverage number in the model
+# (hbm_trade_ratio) and the single most important trend (dram_gb_per_wafer's
+# decaying growth rate).
+
+# S18. DRAM bits per wafer, blended across the whole industry mix (DDR5, DDR4,
+# LPDDR, GDDR, and the older nodes CXMT runs). NOT leading-edge-only.
+#
+# The growth rate of THIS series is the supply story. Implied annual growth:
+#   2018->2022  ~11%/yr      (still shrinking productively)
+#   2022->2025  ~10%/yr
+#   2025->2029  ~5%/yr       (capacitor aspect ratio is running out of room)
+#   2029->2032  ~6%/yr       (3D DRAM begins to add back -- see three_d_dram)
+# DRAM planar scaling is close to dead. That is why supply growth now depends on
+# pouring concrete rather than on shrinking, and concrete takes 3-4 years.
+dram_gb_per_wafer:
+  value: {2018: 1040, 2019: 1170, 2020: 1315, 2021: 1450, 2022: 1585, 2023: 1710,
+          2024: 1915, 2025: 2140, 2026: 2260, 2027: 2385, 2028: 2510, 2029: 2625,
+          2030: 2755, 2031: 2935, 2032: 3135}
+  unit: gigabytes_per_300mm_wafer
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Derived, not quoted. Calibrated so that (wafer capacity x this x utilisation x
+    trade-ratio drag) reproduces ~42 EB of DRAM output in 2025 and lands 2026 bit
+    growth inside TrendForce's guided 10-15% band. Cross-checks: a 16Gb DDR5 die at
+    ~47mm2 gives ~1,150 good dies/wafer = ~2,300 GB, and the blended figure sits
+    below that because of DDR4, GDDR, and CXMT's legacy nodes. Independently, $122B
+    of 2025 DRAM revenue at a ~$2.9/GB blended ASP implies ~42 EB. Two methods, same
+    answer, so the base year is probably right to within ~15%.
+
+# S22 + S23. THE key variable.
+#
+# An HBM bit consumes far more wafer than a DDR5 bit: bigger die (TSV keep-out plus
+# peripheral overhead), stack yield loss, known-good-die screening, and much longer
+# test. So HBM growth does not just add demand -- it SUBTRACTS commodity supply,
+# multiplicatively.
+#
+# This value is DERIVED FROM TWO INDEPENDENT SOURCED RATIOS rather than guessed:
+#   HBM takes ~22% of DRAM wafer input in 2026 but yields only ~9% of DRAM bits.
+#   Solving  (0.22/k) / (0.78 + 0.22/k) = 0.09  gives  k = 2.85.
+# A separate source independently states one HBM wafer displaces ~three conventional
+# DRAM wafers. Those agree, which is a good sign.
+hbm_trade_ratio:
+  value: {2022: 2.3, 2023: 2.4, 2024: 2.6, 2025: 2.85, 2026: 2.85, 2027: 3.05,
+          2028: 3.15, 2029: 3.2, 2030: 3.25, 2031: 3.3, 2032: 3.3}
+  unit: wafer_capacity_per_bit_vs_commodity
+  source: https://tech-insider.org/memory-chip-shortage-2026-ai-consumer-electronics/
+  confidence: medium
+  notes: >
+    Rises after 2026 because HBM4 (16-hi stacks, logic base die) is a worse deal in
+    wafer terms than HBM3E: taller stacks compound known-good-die losses and the base
+    die adds area. If this ratio keeps climbing, the squeeze is self-reinforcing --
+    every incremental unit of AI demand destroys more commodity supply than the last.
+
+# Share of DRAM wafer starts allocated to HBM. A producer ALLOCATION decision, not a
+# physical constraint: HBM has been the most profitable use of a wafer, so the big
+# three keep pushing this up. It is the transmission belt from AI demand to consumer
+# DRAM shortage.
+hbm_wafer_share:
+  value: {2020: 0.005, 2022: 0.021, 2023: 0.033, 2024: 0.101, 2025: 0.218,
+          2026: 0.261, 2027: 0.339, 2028: 0.398, 2029: 0.438, 2030: 0.485,
+          2031: 0.513, 2032: 0.528}
+  unit: fraction_of_EX_CHINA_dram_wafer_starts
+  source: https://tech-insider.org/memory-chip-shortage-2026-ai-consumer-electronics/
+  confidence: medium
+  notes: >
+    NOTE THE DENOMINATOR: this is a share of NON-CHINESE wafer starts, not global
+    ones. CXMT makes no meaningful HBM (no EUV, no advanced packaging, no customers),
+    so the HBM allocation decision is taken by Samsung / SK Hynix / Micron over their
+    own wafers. Applying the share to the global pool instead has the absurd
+    consequence that a CXMT ramp would make the big three "produce more HBM" -- a
+    test catches this.
+    The sourced figures are GLOBAL (~19% of all DRAM wafers in 2025 -> ~22-23% in
+    2026) and have been converted here by dividing by the ex-China share of capacity:
+    0.22 / 0.844 = 0.261 for 2026. Beyond 2026 the path is the model's assumption.
+    Note where it ends up: >50% of the big three's wafers on HBM by 2032. That is what
+    the stated trajectory implies, and it is startling enough to be worth a slider.
+    The compounding cruelty: at a 2.85x trade ratio, a 26% wafer allocation costs
+    roughly HALF the commodity bits those wafers would otherwise have made.
+
+# CXMT and other Chinese DRAM run older nodes without EUV, so they get fewer bits per
+# wafer than the leading edge. Their wafers are discounted accordingly.
+cxmt_density_discount:
+  value: {2020: 0.45, 2022: 0.50, 2024: 0.58, 2025: 0.62, 2026: 0.66, 2028: 0.72,
+          2030: 0.78, 2032: 0.82}
+  unit: fraction_of_industry_average_bits_per_wafer
+  source: https://newsletter.semianalysis.com/p/chinas-cxmt-is-set-to-challenge-dram
+  confidence: low
+  notes: >
+    Closing the gap but still behind. DUV multipatterning costs them steps, yield and
+    die area. This is why CXMT's ~13% of global wafer capacity translates into
+    materially less than 13% of global bits.
+
+# S24. The regime break. 3D DRAM (4F2 + vertical channel transistor) is the thing
+# that would actually end the structural shortage, by restoring the density scaling
+# that planar DRAM has run out of. Consensus puts meaningful volume at 2030+.
+three_d_dram:
+  first_volume_year:
+    value: 2030
+    unit: year
+    source: DERIVED
+    confidence: speculative
+    notes: >
+      A genuine switch, not a tweak. Pull this to 2028 and the out-years change
+      character; push it to 2032 and they do not. It is already embedded in the
+      dram_gb_per_wafer uptick from 2030. Exposed as a slider precisely because
+      nobody knows.
+  density_uplift:
+    value: 0.35
+    unit: fraction
+    source: DERIVED
+    confidence: speculative
+    notes: Cumulative extra bits/wafer once ramped, phased over ~4 years.
+
+# S20. NAND still scales where DRAM does not. This asymmetry is the whole reason the
+# two line pairs must never be summed: NAND can answer demand with layers, DRAM
+# increasingly cannot answer it with anything except new fabs.
+nand_tb_per_wafer:
+  value: {2018: 28, 2019: 35, 2020: 40, 2021: 46, 2022: 53, 2023: 61, 2024: 69,
+          2025: 82, 2026: 93, 2027: 104, 2028: 117, 2029: 132, 2030: 148,
+          2031: 165, 2032: 183}
+  unit: terabytes_per_300mm_wafer
+  source: DERIVED
+  confidence: low
+  notes: >
+    ~12%/yr sustained, via layer count (2xx -> 3xx -> 4xx -> 1000) plus string
+    stacking plus QLC/PLC. Calibrated to reproduce ~1,450 EB of NAND output in 2025.
+    Unlike DRAM, this growth rate is NOT decaying -- vertical scaling still works.

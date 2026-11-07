@@ -11,7 +11,7 @@
 # second-guessing its output.
 
 sqlite_path:
-  value: ../memoryProjection/report/memory_model.sqlite
+  value: ../memoryProjection/vintages/2026-07/memory_model.sqlite
   unit: path
   source: USER_INPUT
   confidence: high
