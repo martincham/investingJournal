@@ -1,7 +1,7 @@
 July 12th, 2026
 
 Results note for the model in `memoryProjection/`. A record of what the model says, not
-an argument. Related: [[20260608-MicronMU2026Thesis]]
+an argument. Related: [[20260708-MicronMU2026Thesis]]
 
 ## What it is
 
