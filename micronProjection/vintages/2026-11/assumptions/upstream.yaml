@@ -1,0 +1,104 @@
+# The bit supply/demand input. NOT ours to argue with.
+#
+# memoryProjection produces the physical lines -- DRAM/NAND bits supplied and demanded,
+# quarterly, 2018Q1..2032Q4, in three scenarios. This model consumes them AS GIVEN and
+# layers price, cost and the P&L on top. No supply or demand value is ever recomputed,
+# adjusted, overlaid or perturbed here; tests/test_upstream.py enforces that.
+#
+# Consequence to state plainly rather than bury: every number this model emits is
+# conditional on those bit lines being right. Supply/demand uncertainty is spanned by
+# running inside memoryProjection's own tight/central/loose scenarios, never by us
+# second-guessing its output.
+
+sqlite_path:
+  value: ../memoryProjection/vintages/2026-11/memory_model.sqlite
+  unit: path
+  source: USER_INPUT
+  confidence: high
+  notes: >
+    Relative to this repo's root. A FROZEN vintage of memoryProjection, never its live
+    report/ output, so re-running upstream cannot move Micron's numbers until this path is
+    changed on purpose. We open it read-only (mode=ro) and never write.
+    Moved from vintages/2026-07 to vintages/2026-11 on 2026-11-07 (the November revision).
+
+expected_sha256:
+  value: 7ca3ee8d39107e8ce8dea1b92800ded3c7769e3c4278de0d1b5ad03c8e756055
+  unit: hex
+  source: DERIVED
+  confidence: high
+  notes: >
+    SHA256 of memoryProjection/vintages/2026-11 (1,011,712 bytes, generated
+    2026-11-07T19:23:14Z; the July vintage was 30e1eda2...).
+    A mismatch is NOT an error -- upstream is allowed to re-run. It is a prompt to
+    re-check the backcast calibration, since our ASP response is fitted against that
+    exact bit series. run_meta records the hash actually used, so any output can be
+    traced to the input that produced it.
+
+expected_actuals_end:
+  value: 2026Q3
+  unit: quarter
+  source: DERIVED  # memoryProjection/vintages/2026-11/VINTAGE.md
+  confidence: high
+  notes: >
+    Upstream pins observed data through 2026Q3 and projects after. This lines up exactly
+    with Micron's last reported quarter (FQ4 FY2026, ended 2026-09-03, in the FY26 10-K)
+    under our fiscal mapping -- so the ASP pin date, the bit actuals cutoff and the EDGAR actuals cutoff
+    are all the same quarter. Convenient, and not a coincidence: both are "the most
+    recent thing reality has published".
+
+expected_scenarios:
+  value: [tight, central, loose]
+  unit: list
+  source: DERIVED
+  confidence: high
+  notes: >
+    Upstream's run_meta lists exactly these. They are also OUR scenarios -- we add no
+    fourth case. Inventing a scenario upstream cannot express would mean asserting a
+    supply/demand path it does not produce, which is precisely what this model does not do.
+
+# ---------------------------------------------------------------------------
+# Segment classification. Mirrors memoryProjection/AGENTS.md verbatim.
+# ---------------------------------------------------------------------------
+contested_segments:
+  value: [pc, smartphone, console, graphics, servers_traditional, other]
+  unit: list
+  source: DERIVED  # memoryProjection/AGENTS.md, "Segments in demand_segment"
+  confidence: high
+  notes: >
+    The elastic pool. AGENTS.md: the ENTIRE gap is these segments "getting squeezed from
+    100% served to ~60% served". They are the price-setting margin, so they are the
+    denominator of our tightness signal.
+
+inelastic_segments:
+  value: [hbm, ai_server_host, kv_offload, ai_cpu_server, auto_industrial_iot]
+  unit: list
+  source: DERIVED  # memoryProjection/AGENTS.md
+  confidence: high
+  notes: >
+    The inelastic core: "peaks near ~1/3 of world DRAM bits and always fits under
+    supply; HBM specifically runs in slight surplus every year (hbm_is_capped is false
+    in all quarters)". We therefore subtract it from supply at FULL service before
+    computing contested tightness. This is honouring a stated property of the input,
+    not an assumption we are adding -- test_hbm_is_not_capped_in_the_priced_window
+    checks it still holds in the sqlite we actually loaded.
+    Nov 2026: `ai_cpu_server` (agentic-AI CPU servers) is new upstream and is inelastic
+    by upstream's own classification. In the November vintage HBM is capped only in
+    2032Q2-Q4 of central (test ceiling C5), so the premise holds through 2032Q1.
+    NOTE ai_essd is NAND-side and so is absent from the DRAM list.
+
+inventory_segment:
+  value: inventory
+  unit: segment
+  source: DERIVED  # memoryProjection/AGENTS.md
+  confidence: high
+  notes: >
+    A swing term, not a buyer. AGENTS.md says to EXCLUDE it when summing end-demand --
+    correct for that purpose, and fatal for ours.
+    THE DESTOCK IS THE GLUT. Verified against the sqlite: the contested served fraction
+    computed WITHOUT inventory says 2023 (0.833) was TIGHTER than the 2021 boom (0.912).
+    2023 is the deepest glut in memory history; Micron ran a -32.7% gross margin in it.
+    Including the swing, every known cycle signs correctly:
+        2019 glut  1.158 surplus     2021 boom 0.837 deficit
+        2023 glut  1.105 surplus     2026 boom 0.782 deficit
+    So our price signal includes it. We are not modifying the series -- we are declining
+    to discard a column of upstream's own output when deriving a signal from it.

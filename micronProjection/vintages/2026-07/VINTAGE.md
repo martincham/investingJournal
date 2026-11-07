@@ -12,3 +12,7 @@ of the inputs, except that `upstream.yaml` now points at the frozen memory vinta
 instead of `report/`. The file it points to is byte-identical.
 
 Frozen output. Do not edit or re-run.
+
+`fy_summary.csv` was added on 2026-11-07 for the vintage comparison in the November
+report. It was generated from commit `de6edfa`, whose model output is identical to
+02850ac's (the report's numbers did not change between them).

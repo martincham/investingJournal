@@ -1,0 +1,73 @@
+# Share count and shareholder returns. Drives the denominator of EPS.
+
+buyback_share_of_fcf:
+  value: {2020: 0.0, 2022: 0.30, 2023: 0.0, 2025: 0.05, 2026: 0.0, 2027: 0.40,
+          2028: 0.60, 2030: 0.70, 2032: 0.70}
+  unit: fraction_of_free_cash_flow
+  source: DERIVED
+  confidence: low
+  notes: >
+    Share of FCF returned via buybacks. Zero in FY23 -- Micron suspended repurchases in
+    the trough, as it has in every trough; a model that keeps buying back through a
+    downturn would shrink the share count exactly when the company is preserving cash,
+    and would flatter trough EPS.
+    Rises through the boom as the balance sheet fills.
+    Nov 2026: FY26 actual was ~1% ($650m of repurchases against $59bn of FCF), because
+    Micron held capital return until 9 Dec 2026, two years after its CHIPS agreements.
+    It says it will increase capital return from that date and "over time return 100% of
+    our excess cash to shareholders". 2026 is therefore 0 (FQ1'27 ends 3 Dec, before the
+    date) and 2027-2028 ramp to 0.6-0.7 of FCF. Not 1.0: "excess" cash is after a cash
+    floor and the SCA deposits ($12.7bn) that must be returned to customers. Speculative.
+
+capex_incentives_usd_bn_per_quarter:
+  value: {2025: 0.50, 2026: 0.80, 2027: 0.60, 2028: 0.50, 2030: 0.30, 2032: 0.20}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: low
+  notes: >
+    Government incentives received against capex (CHIPS Act, Japan, Singapore). Used only
+    where capex comes from Micron's own NET plan (guidance.capex_net_usd_bn_by_quarter):
+    the model's capex line is GROSS, so these are added back.
+    FY26 actual: $3.3bn over the year, $0.33-0.73bn in the last two quarters (press
+    release, capex net reconciliation). Tapers as US fab subsidies are drawn down.
+
+dividend_usd_bn_per_quarter:
+  value: {2020: 0.0, 2021: 0.11, 2023: 0.13, 2025: 0.13, 2026: 0.20,
+          2028: 0.30, 2030: 0.38, 2032: 0.45}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Micron initiated a dividend in FY2021 and has raised it steadily, INCLUDING through
+    the FY23 trough (it cut buybacks, not the dividend -- the usual hierarchy). Modelled
+    in dollars for that reason.
+
+dilution_shares_m_per_quarter:
+  value: {2020: 3.0, 2023: 3.5, 2025: 3.5, 2028: 3.5, 2032: 3.5}
+  unit: millions_of_shares_per_quarter
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Gross share issuance from stock comp, before buybacks. Roughly steady at ~14M/yr,
+    which is what has kept Micron's share count drifting up ~1%/yr in years when it
+    was not repurchasing.
+
+implied_pe_for_buybacks:
+  value: 10.0
+  unit: multiple_of_trailing_eps
+  source: DERIVED
+  confidence: speculative
+  notes: >
+    Retiring shares needs a share PRICE, which needs a valuation, which this model does
+    not have -- a valuation layer was explicitly out of scope. So the buyback is divided
+    by an implied price of (trailing EPS x this multiple) to get shares retired.
+
+    ~10x is roughly Micron's through-cycle multiple on trailing earnings. It is a crude
+    stand-in and it is CIRCULAR in an obvious way: EPS depends on the share count, which
+    depends on the price, which we derive from EPS. The circularity is weak (buybacks move
+    the share count ~1-2%/yr) but it is real.
+
+    SPECULATIVE, and it makes the share count the least trustworthy line in the model.
+    It barely matters in practice -- the count moves a few percent over six years against
+    an EPS that moves by multiples -- but a reader should not mistake it for modelled.
+    This is the seam where a valuation layer would plug in.
