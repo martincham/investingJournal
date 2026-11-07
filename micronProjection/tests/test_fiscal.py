@@ -28,12 +28,12 @@ def qs(doc):
 
 
 def test_fq3_fy26_maps_to_2026q2(qs):
-    """The seam. Micron's last reported quarter must land on upstream's actuals_end,
-    or the ASP pin, the bit actuals and the EDGAR actuals stop agreeing."""
-    last = qs[-1]
-    assert (last.fiscal.start, last.fiscal.end) == (date(2026, 2, 27), date(2026, 5, 28))
-    assert last.calendar == Quarter(2026, 2)
-    assert last.fiscal.label == "FY26Q3"
+    """The seam. Micron's last quarter USED (FQ3'26) must land on upstream's actuals_end,
+    or the ASP pin, the bit actuals and the EDGAR actuals stop agreeing. Later filings
+    exist in EDGAR but sit past asp.pin_end and are not used."""
+    seam = next(q for q in qs if q.fiscal.label == "FY26Q3")
+    assert (seam.fiscal.start, seam.fiscal.end) == (date(2026, 2, 27), date(2026, 5, 28))
+    assert seam.calendar == Quarter(2026, 2)
 
 
 def test_fy26_quarters_map_as_documented(qs):
@@ -86,9 +86,13 @@ def test_fiscal_calendar_mapping_is_bijective(qs):
 def test_53_week_year_fq4_fy20_is_98_days(qs):
     """FY2020 ran 370 days with a 14-week FQ4 (2020-05-29..2020-09-03). The midpoint
     rule needs no special case for it -- but the length does need normalising."""
-    long = [q for q in qs if q.fiscal.is_long]
-    assert len(long) == 1, f"expected exactly one 14-week quarter in the window, got {[q.fiscal.label for q in long]}"
-    fq4 = long[0]
+    long = {q.fiscal.label: q for q in qs if q.fiscal.is_long}
+    # FY2020 and FY2026 are the 53-week years in the window; FY26Q4 is only present once
+    # the FY26 10-K is in the cache.
+    assert "FY20Q4" in long and set(long) <= {"FY20Q4", "FY26Q4"}, (
+        f"unexpected 14-week quarters: {sorted(long)}"
+    )
+    fq4 = long["FY20Q4"]
     assert fq4.fiscal.days == 98
     assert fq4.fiscal.start == date(2020, 5, 29) and fq4.fiscal.end == date(2020, 9, 3)
     assert fq4.calendar == Quarter(2020, 3)

@@ -87,7 +87,12 @@ def observations(a: Assumptions, scenario: str = "central") -> list[Observation]
     Uses the FULL available window (2018Q1 on), not the 2020 start the report uses. The
     2018 boom and 2019 glut are the only completed cycle in the record; excluding them
     was what made the anchor un-fittable.
+
+    Ends at asp.pin_end. EDGAR keeps filing past the seam, but upstream's tightness after
+    its actuals_end is PROJECTED, so a later quarter would fit real revenue against a
+    modelled market.
     """
+    pin_end = Quarter.parse(str(a.value("asp.pin_end")))
     base = upstream.load_baseline(a, scenario)
     mu = {m.quarter: m for m in micron.series(a, base)}
     rep = edgar.load()
@@ -97,7 +102,7 @@ def observations(a: Assumptions, scenario: str = "central") -> list[Observation]
 
     out: list[Observation] = []
     for q in sorted(bridge):
-        if q not in sig or q not in reported:
+        if q > pin_end or q not in sig or q not in reported:
             continue
         s, r, m = bridge[q], reported[q], mu[q]
         price_eq = cost_mod.commodity_equivalent_bits(a, m, q) * (s.shipped_bits / s.produced_bits)

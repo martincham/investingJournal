@@ -72,7 +72,9 @@ def test_quarterly_series_is_gapless(qs):
     assert labels == sorted(labels)
     for prev, nxt in zip(labels, labels[1:]):
         assert nxt - prev == 1, f"gap between {prev} and {nxt}"
-    assert labels[-1] == Quarter(2026, 2), "last reported quarter is FQ3'26 -> 2026Q2"
+    # EDGAR keeps filing after the seam (FQ4'26 onward); the model ignores those quarters
+    # via asp.pin_end, so the series only has to reach the seam, not stop there.
+    assert labels[-1] >= Quarter(2026, 2), "reported data must reach FQ3'26 -> 2026Q2"
 
 
 def test_covers_2020_through_2026q2(cal):
