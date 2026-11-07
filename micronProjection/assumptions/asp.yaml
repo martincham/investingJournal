@@ -1,14 +1,16 @@
-# Price. The layer memoryProjection deliberately left out (its model/market.py is a
-# stub whose docstring is, in effect, the spec for this file).
+# Price.
 #
-# Structure, per the build decision:
-#   <= 2026Q2  ASP is PINNED to reality -- Micron's own realised revenue/bit.
-#   >  2026Q2  ASP is ENDOGENOUS -- a convex response to tightness, pulled back by a
-#              cost anchor.
+# Structure (November 2026 revision):
+#   <= 2026Q3  ASP is PINNED to reality -- Micron's own realised revenue/bit.
+#   2026Q4     ASP is GUIDED -- solved from Micron's FQ1'27 revenue guide.
+#   >  2026Q4  ASP follows upstream's industry DRAM price PATH (memoryProjection table
+#              `market`, real 2025 $), indexed to the guided quarter and converted to
+#              nominal. price_source below selects this; `fitted` restores the July
+#              engine. The fitted response is computed either way, as a cross-check.
 #
-# EVERY COEFFICIENT BELOW IS FITTED. Regenerate with:  python -m model.calibrate
+# EVERY COEFFICIENT IN THE RESPONSE BLOCK IS FITTED. Regenerate with:  python -m model.calibrate
 #
-#   log(markup) = a + b*T + d*T_ma4          fitted on 34 quarters, 2018Q1..2026Q2
+#   log(markup) = a + b*T + d*T_ma4          fitted on 35 quarters, 2018Q1..2026Q3
 #   residual decays at AR(1) rho             also fitted
 #   ASP = markup * cash_cost_per_bit
 #
@@ -24,29 +26,33 @@
 # The fitted response. Do not hand-edit -- re-run model/calibrate.py.
 # ---------------------------------------------------------------------------
 response_a:
-  value: 0.8638
+  value: 0.8641
   unit: log_markup_intercept
   source: DERIVED
   confidence: medium
   notes: >
-    Intercept: log of the markup over CASH cost at zero tightness. exp(0.8638) = 2.37x.
+    Intercept: log of the markup over CASH cost at zero tightness. exp(0.8641) = 2.37x.
+    Unchanged by the November refit (July: 0.8638).
 
     CROSS-CHECKED BY A SECOND METHOD, which is the main reason to trust it. Measuring the
     markup directly in the seven observed quarters where |T| < 0.05 gives a mean of 2.39x
     (range 2.03-2.76). The regression never sees that calculation and lands 1% away.
 
 response_b:
-  value: 0.0781
+  value: 0.4268
   unit: log_markup_per_unit_current_tightness
   source: DERIVED
   confidence: medium
   notes: >
-    Coefficient on the CURRENT quarter's tightness. Fits to approximately ZERO, and that
-    is a finding rather than a disappointment: this quarter's balance barely moves this
-    quarter's price. Contracts roll, and the spot signal takes time to reach realised ASP.
+    Coefficient on the CURRENT quarter's tightness.
+    NOVEMBER REFIT: 0.08 -> 0.43. In July this fitted to ~zero and was read as "this
+    quarter's balance barely moves this quarter's price". The November vintage restated
+    upstream's history (2026Q2 tightness +0.20 -> +0.31) and added 2026Q3 at +0.37, the
+    tightest quarter on record, which arrived with Micron's highest markup (9.2x). The
+    current quarter now carries real weight. The sustained term (d) still dominates.
 
 response_d:
-  value: 2.6225
+  value: 2.5912
   unit: log_markup_per_unit_sustained_tightness
   source: DERIVED
   confidence: medium
@@ -62,35 +68,34 @@ response_d:
     systematically under-price a sustained boom and over-price a fresh one.
 
 response_rho:
-  value: 0.9270
+  value: 0.8766
   unit: ar1_coefficient
   source: DERIVED
   confidence: low
   notes: >
     AR(1) persistence of the residual: how long a deviation from the fitted level lasts.
-    Half-life ~9.1 quarters. This is the ONLY dynamics in the model, and it is MEASURED
+    Half-life ~5.3 quarters (July fit: 0.927, ~9.1 quarters). This is the ONLY dynamics in the model, and it is MEASURED
     rather than posited -- it is what replaces the invented kappa.
 
-    It does real work at the seam. Micron's actual 2026Q2 markup is 8.58x against a
-    fitted 4.18x, so the projection starts from the real number and converges to the
+    It does real work at the seam (fitted engine only). Micron's actual markup sits far
+    above the fitted level at the seam, so the projection starts from the real number and converges to the
     fitted level over ~2 years instead of stepping down to it. Without it the seam would
     contain a 2x discontinuity in price that no quarter ever did.
-    Low confidence: rho near 0.92 is estimated off 33 residuals and is the least stable
-    number in the block.
+    Low confidence: estimated off 34 residuals and the least stable number in the block.
 
 response_r2:
-  value: 0.5260
+  value: 0.6382
   unit: fraction
   source: DERIVED
   confidence: high
   notes: >
-    R2 of the fit. Recorded so the model states its own explanatory power rather than
-    implying precision it lacks: roughly HALF the quarter-to-quarter variation in
-    Micron's markup is NOT explained by tightness. Utilisation, contract timing, mix and
+    R2 of the fit (July 0.53). Recorded so the model states its own explanatory power
+    rather than implying precision it lacks: about a third of the quarter-to-quarter
+    variation in Micron's markup is NOT explained by tightness. Utilisation, contract timing, mix and
     company-specific execution live in the other half.
 
 fitted_tightness_max:
-  value: 0.236
+  value: 0.371
   unit: tightness_units
   source: DERIVED
   confidence: high
@@ -101,9 +106,11 @@ fitted_tightness_max:
     until a hyperbola composed with an exponential response produced an ASP of $3,053/GB
     in the tight scenario. See model/tightness.py.
 
-    THIS IS THE MODEL'S BIGGEST REMAINING LIMITATION. Upstream's out-years run T = +0.30
-    to +0.65, i.e. up to 2.4x beyond anything on record, where the fit implies markups of
-    5-11x that Micron has never sustained. Rows past this threshold are marked
+    November 2026: 0.236 -> 0.371, because 2026Q3 (the tightest quarter on record) is now
+    in the fit. Central's out-years (T ~ +0.28 to +0.37) sit INSIDE the fitted range;
+    only the tight scenario (+0.5 to +1.0) extrapolates.
+    In July this was the model's biggest limitation: upstream's out-years ran T = +0.30
+    to +0.65, up to 2.4x beyond anything on record. Rows past this threshold are marked
     `extrapolating` and should be read as "what the fitted response says IF it holds that
     far", which nothing verifies.
 
@@ -153,6 +160,60 @@ served_reference:
     `inventory` segment, which upstream's AGENTS.md tells you to exclude when summing
     end-demand -- correct there, fatal here. See model/tightness.py.
 
+# ---------------------------------------------------------------------------
+# What sets price after the guided quarter. November 2026 revision.
+# ---------------------------------------------------------------------------
+price_source:
+  value: market
+  unit: enum
+  source: USER_INPUT
+  confidence: high
+  notes: >
+    `market` (default since Nov 2026): Micron's commodity ASP after the guided quarter
+    moves with upstream's industry DRAM price path, indexed to the guided quarter:
+        ASP(q) = ASP(guided) x P_market(q) / P_market(guided) x (1 + inflation)^years
+    `fitted`: the July engine, markup over cash cost from the fitted tightness response.
+
+    WHY THE SWITCH. On the November vintage the fitted engine projects central revenue
+    FALLING every quarter after FQ1'27 ($61.5bn -> $53bn by FQ4'27, margin 87.8% -> 83.8%)
+    because the guided quarter sits at ~11x cash cost against a fitted ~7.5x and the
+    residual decays at rho. That contradicts both Micron's guide ("sequential revenue
+    growth each quarter", FQ1 is the FY27 margin floor) and upstream's own price layer
+    (industry DRAM +15% in 2026Q4, then flat to rising, 89-92% margins). Upstream owns
+    the market; this model owns Micron. So upstream's price PATH is taken as given, the
+    LEVEL is Micron's own (anchored on its guide), and the fitted response is kept as a
+    cross-check series (AspQuarter.fitted_commodity_per_gb) shown in the report.
+
+    Decided by the user on 2026-11-07 ("C": market drives the P&L, fitted shown alongside).
+
+market_inflation_annual:
+  value: 0.025
+  unit: fraction_per_year
+  source: DERIVED
+  confidence: low
+  notes: >
+    Converts upstream's REAL 2025-dollar price path to the nominal dollars Micron reports
+    in. Upstream's anchor (2026Q3) is observed revenue / bits, so it is effectively
+    nominal at the anchor; only the change after it needs inflating. Indexed from the
+    guided quarter, so FY27 moves by ~1-2% and FY30 by ~8%.
+    Not looked up: roughly the Fed's 2% target plus recent overshoot. Low confidence, low
+    leverage next to the price path itself.
+
+price_floor_markup:
+  value: 1.17
+  unit: multiple_of_cash_cost
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Commodity ASP never falls below this multiple of Micron's own cash cost per bit. It
+    is Micron's LOWEST observed markup in the record (2023Q1, 1.169x -- the quarter of the
+    -32.7% gross margin, D&A included), measured by model/calibrate.observations, not
+    chosen. test_price_floor_is_micron_observed_trough holds it there.
+    Needed because upstream's own floor (price >= cost / 1.33) is set on upstream's
+    industry cost, which falls on a different path from Micron's. Following upstream's
+    price index all the way down in the loose glut otherwise takes Micron below cash cost
+    (-107% gross margin by FY30 in the dry run) -- deeper than any trough on record.
+
 hbm_asp_premium:
   value: {2020: 2.6, 2023: 2.9, 2025: 3.2, 2026: 3.1, 2028: 2.8, 2030: 2.6, 2032: 2.5}
   unit: ratio_vs_commodity_dram_per_gb
@@ -199,14 +260,15 @@ nand_asp_ratio:
 # The pin. Reality through 2026Q2.
 # ---------------------------------------------------------------------------
 pin_end:
-  value: 2026Q2
+  value: 2026Q3
   unit: quarter
   source: USER_INPUT
   confidence: high
   notes: >
     Real numbers up to and including this quarter; projection after it. Deliberately the
     same quarter as upstream's actuals_end and as Micron's last reported quarter
-    (FQ3'26, ended 2026-05-28) -- all three seams coincide, so there is exactly one
+    (FQ4'26, ended 2026-09-03, a 98-day quarter; moved from 2026Q2 in the November 2026
+    revision) -- all three seams coincide, so there is exactly one
     boundary in this model between what is known and what is modelled.
 
     Through the pin, ASP is Micron's OWN realised $/GB: reported revenue divided by our

@@ -6,7 +6,7 @@ memoryProjection is indexed by CALENDAR quarter. Something has to reconcile them
 
 **The rule: a fiscal quarter belongs to the calendar quarter containing its midpoint.**
 
-Verified identical to max-month-overlap across every quarter 2019Q3..2026Q2, and
+Verified identical to max-month-overlap across every quarter 2019Q3..2026Q3, and
 simpler -- a 91-day period has an unambiguous middle day, so there are no ties to
 break. It is also what the SEC itself does: XBRL's own `frame` field tags the quarter
 ended 2025-11-27 as `CY2025Q4`, which is what this rule returns. That agreement is
@@ -17,9 +17,10 @@ Consequences worth knowing:
 
   FQ1'26 (Aug 29 - Nov 27 2025) -> 2025Q4
   FQ2'26 (Nov 28 - Feb 26 2026) -> 2026Q1
-  FQ3'26 (Feb 27 - May 28 2026) -> 2026Q2   <- Micron's last reported quarter
+  FQ3'26 (Feb 27 - May 28 2026) -> 2026Q2
+  FQ4'26 (May 29 - Sep  3 2026) -> 2026Q3   <- Micron's last reported quarter (98 days)
 
-That last line is why the seams line up: upstream's `actuals_end` is 2026Q2 too, so the
+That last line is why the seams line up: upstream's `actuals_end` is 2026Q3 too, so the
 bit actuals, the EDGAR actuals and the ASP pin all end on the same quarter.
 
 The 53-week trap: FY2020 was 370 days, with a 98-day FQ4 (2020-05-29..2020-09-03). A

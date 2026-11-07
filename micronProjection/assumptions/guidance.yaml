@@ -1,15 +1,21 @@
-# Company guidance and near-term analyst consensus.
+# Company guidance. The third state between reported and projected.
 #
-# The seam in this model used to be binary: reported, then fitted. That threw away a real
-# category of information sitting between them. Micron has GUIDED FQ4'26, and a guide from
-# the company two months into the quarter is worth more than a response fitted at R2 = 0.53
-# extrapolating 2x beyond its range. So the pin now runs:
+#   reported (<= FQ4'26, calendar 2026Q3)  ->  guided (FQ1'27, 2026Q4)  ->  projected
 #
-#   reported (<= FQ3'26)  ->  guided (FQ4'26, FQ1'27)  ->  fitted (FQ2'27 on)
+# Guidance is NOT reported data and is marked separately everywhere: `is_actual` stays
+# false for the guided quarter, and the report shows it as its own state. It CALIBRATES
+# the first projected quarter; it never overrides an actual.
 #
-# Guidance is NOT reported data and is marked separately from it everywhere -- `is_actual`
-# stays false for these quarters, and the report shows them as their own band. It is a
-# third state, not a promotion to fact.
+# GAAP, not non-GAAP. Every reported row in this model is Micron's GAAP filing (EDGAR),
+# so the guided quarter is pinned to the GAAP guide or the seam would jump by the
+# stock-comp adjustment. Non-GAAP equivalents are in data/reported/guidance.csv, and
+# tests/test_guidance.py holds this file to that one.
+#
+# Source for everything below: Micron FQ4'26 press release and prepared remarks,
+# 2026-09-30 (data/filings/FY26Q4/, gitignored; figures in data/reported/guidance.csv).
+#
+# November 2026 revision: FQ4'26 is now REPORTED ($54.2bn against a $50bn guide), so its
+# guide and the "+17%/quarter contract price" consensus that bridged to FQ1'27 are gone.
 
 guidance_end:
   value: 2026Q4
@@ -17,71 +23,84 @@ guidance_end:
   source: USER_INPUT
   confidence: high
   notes: >
-    Last CALENDAR quarter carrying guidance. Beyond this the fitted response takes over.
-    2026Q4 is Micron's fiscal Q1 2027 -- the second of the two quarters the +17%/quarter
-    price consensus covers.
+    Last CALENDAR quarter carrying a full guide: 2026Q4 = Micron's fiscal Q1 2027
+    (Sep 4 - Dec 3, 2026). Must be exactly asp.pin_end + 1; the model supports one
+    guided quarter. After it, price comes from asp.price_source.
 
-fq4_2026_revenue_usd_bn:
+revenue_usd_bn:
   value:
-    central: 51.0
-    tight: 55.0
-    loose: 49.0
+    central: 61.5
+    tight: 63.0
+    loose: 60.0
   unit: billions_usd
-  source: USER_INPUT
+  source: https://www.sec.gov/Archives/edgar/data/0000723125/000072312526000018/a2026q4ex991-pressrelease.htm
+  confidence: high
+  notes: >
+    FQ1'27 revenue guide, $61.5bn +/- $1.5bn (GAAP = non-GAAP). Central is the MIDPOINT.
+    tight/loose take the ends of the range; at one quarter out upstream's bit scenarios
+    barely diverge, so the near-term spread is the guide's own range, not supply.
+
+    NOT nudged for Micron's beat record, though the record is real: FQ3'26 came in 24%
+    above its guide midpoint and FQ4'26 8.5% above (data/reported/guidance.csv). The July
+    file put central above the guide on that basis; this one doesn't, because a guide
+    calibrates the projection and a beat is an observation we only get in December.
+    Treat the beat history as upside to the central case, not as part of it.
+
+gross_margin:
+  value: 0.8595
+  unit: fraction
+  source: https://www.sec.gov/Archives/edgar/data/0000723125/000072312526000018/a2026q4ex991-pressrelease.htm
+  confidence: high
+  notes: >
+    GAAP gross margin guide, ~85.95% (non-GAAP 86.25%; the 30bp is stock comp in COGS).
+    Pins the guided quarter's COGS, and through it the cash cost per bit that the cost
+    curve compounds forward from (model/pnl.py). Micron called FQ1 the FY27 gross-margin
+    FLOOR: higher-cost FQ4 inventory (FY26 incentive comp absorbed into inventory) sells
+    through in FQ1, and FQ2's relief from that is offset by higher FY27 incentive comp.
+    So the anchor cost is not a one-off to be stripped out -- it is the cost level Micron
+    says carries forward.
+
+opex_usd_bn:
+  value: 2.31
+  unit: billions_usd
+  source: https://www.sec.gov/Archives/edgar/data/0000723125/000072312526000018/a2026q4ex991-pressrelease.htm
+  confidence: high
+  notes: >
+    GAAP operating expenses guide, ~$2.31bn (non-GAAP $2.06bn). Applied to R&D + SG&A in
+    the guided quarter, split in the ratio of the opex.yaml series.
+
+tax_rate:
+  value: 0.155
+  unit: fraction_of_pretax_income
+  source: https://investors.micron.com/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf
+  confidence: high
+  notes: >
+    "Fiscal Q1 and fiscal year 2027 tax rate of around 15.5%." Applied to the guided
+    quarter; opex.yaml's tax_rate series carries the same value for FY27.
+
+eps_diluted:
+  value:
+    central: 37.84
+    low: 36.84
+    high: 38.84
+  unit: usd_per_share
+  source: https://www.sec.gov/Archives/edgar/data/0000723125/000072312526000018/a2026q4ex991-pressrelease.htm
+  confidence: high
+  notes: >
+    GAAP EPS guide, $37.84 +/- $1.00 (non-GAAP $38.15). NOT an input: nothing in the
+    model reads it to set a number. It is the check -- revenue, margin, opex and tax are
+    pinned, and other income, D&A and the share count come from the model, so EPS landing
+    inside this range tests the parts that are not pinned. tests/test_guidance.py.
+
+capex_net_usd_bn_by_quarter:
+  value: {2026Q4: 11.5, 2027Q1: 13.5, 2027Q2: 14.0, 2027Q3: 16.0}
+  unit: billions_usd_per_quarter
+  source: https://investors.micron.com/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf
   confidence: medium
   notes: >
-    Micron's fiscal Q4 2026 (calendar 2026Q3, quarter ending ~3 Sep 2026).
-
-    The company guided ~$50bn. Central is set at 51.0 rather than 50.0 because Micron has
-    beaten its own guide in every quarter of this up-cycle, and in a market where price is
-    the swing factor a guide set mid-quarter is a floor more often than a midpoint.
-    The 49-55 range is the beat/miss spread, NOT the bit-scenario spread -- see the note
-    below, because the two are different axes and mapping one onto the other is a
-    simplification.
-
-    MAPPING TO SCENARIOS. tight/central/loose here are upstream's BIT scenarios, while
-    high/central/low is a REVENUE range for one quarter. They are not the same
-    uncertainty. They are mapped onto each other because at one quarter out the bit lines
-    have barely diverged (upstream's scenarios differ by <2% of bits in 2026Q3), so
-    substantially all of the near-term spread is price and demand timing, not supply.
-    That is defensible for FQ4'26 and would NOT be for FY2029.
-
-price_rise_per_quarter_next_2q:
-  value: 0.17
-  unit: fraction_qoq
-  source: USER_INPUT
-  confidence: medium
-  notes: >
-    Analyst consensus for memory CONTRACT price rises: ~+17% PER QUARTER (confirmed: each
-    quarter rises 17%, so ~+37% compounded), applied to calendar 2026Q3 and 2026Q4
-    (fiscal Q4'26 and Q1'27).
-
-    CONTRACT PRICE IS NOT REALISED ASP, and the two numbers in this file only agree once
-    that is said out loud. FQ3'26 revenue was $41.5bn; the guided ~$51bn for FQ4 is +23%
-    QoQ. Our price-equivalent bits grow +6.0% in that quarter, so the guide implies
-    REALISED ASP of about +10.8% QoQ -- well below the +17% contract figure.
-
-    That gap is the contract-to-realised lag, and it is documented rather than invented:
-    memoryProjection's own actuals.yaml makes the same point about the same period
-    ("realised blended ASP lags them (older contracts roll over gradually, and the mix
-    shifts)"), and sets its realised series a few points under the headline contract
-    numbers for exactly this reason. Micron's back book reprices over several quarters,
-    so a +17% contract move shows up as ~+11% realised in the quarter it lands and keeps
-    feeding through afterwards.
-
-    HONEST CORRECTION: an earlier version of this note claimed the guide and the consensus
-    "independently cross-check" each other at ~+18%. That arithmetic assumed ~4% bit
-    growth; the model says 6%, and the implied realised ASP is +10.8%, not +18%. They are
-    CONSISTENT via the lag, which is a weaker and more accurate claim than a cross-check.
-
-    WHAT IT OVERRIDES, and why that is the right call: the fitted response left to itself
-    projects realised ASP roughly FLAT across these two quarters (11.37 -> 11.39 -> 11.06
-    $/GB). It is fitted at R2 = 0.53 and extrapolating ~2x beyond its range here. A company
-    guide and a price consensus are better information about the next two quarters than
-    that. Past them there is no guidance and the fitted response is all there is.
-
-    KNOWN WART: FQ1'27 applies the full +17% to REALISED ASP, while FQ4 gets ~+11% realised
-    off the same +17% contract move. That is defensible -- the back book keeps repricing,
-    so realised catches up as the rises accumulate -- but it is not derived, and FQ1'27 is
-    the least-supported quarter in the model. FQ4 is pinned by revenue and does not depend
-    on it.
+    FY27 capex, NET of government incentives (Micron's definition). Stated: FQ1 ~$11.5bn,
+    first half ~$25bn, "higher in the second half". The FQ2-FQ4 split is ours: H1 - FQ1
+    = $13.5bn, then $30bn over H2 rising through it, for ~$55bn in the year (double FY26's
+    $27.4bn). The model's capex line is GROSS (EDGAR's PaymentsToAcquirePropertyPlant...),
+    so capital.capex_incentives_usd_bn_per_quarter is added back. After FY27,
+    opex.capex_intensity takes over.

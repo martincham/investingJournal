@@ -28,12 +28,17 @@ from model import pnl
 from model.conf import load
 from model.upstream import sha256, sqlite_path
 from model.vendor.calendar import Quarter
+from report import summary
 
 HERE = Path(__file__).resolve().parent
 OUT = HERE / "micron_model.html"
+PREV_VINTAGE = HERE.parent / "vintages" / "2026-07" / "fy_summary.csv"
 
-# Categorical slots 1,4,5,6 from the reference palette, validated as a 4-slot set:
-# worst adjacent CVD dE 9.1, normal-vision 22.9. Light / dark steps.
+# Categorical slots from the reference palette. Every set of hues that shares a chart is
+# validated (scripts/validate_palette.js): scenarios and the price chart both use
+# blue/orange/aqua -- worst adjacent CVD dE 9.2, normal-vision 27.6 (light); aqua is
+# below 3:1 on the light surface, so the table view is the required relief. Orange next
+# to yellow FAILS the normal-vision floor (13.7) and is never paired. Light / dark steps.
 C = {
     "blue": ("#2a78d6", "#3987e5"),
     "yellow": ("#eda100", "#c98500"),
@@ -42,7 +47,9 @@ C = {
     "red": ("#e34948", "#e66767"),
     "violet": ("#4a3aa7", "#9085e9"),
 }
-PIN = Quarter(2026, 2)
+PIN = Quarter(2026, 3)  # replaced from asp.pin_end in build()
+GREY = "rgba(120,118,111,0.85)"
+SCEN = (("central", "blue"), ("tight", "orange"), ("loose", "aqua"))
 
 
 def _split(rows, attr, scale=1.0):
@@ -67,7 +74,7 @@ def _split(rows, attr, scale=1.0):
     return (act_x, act_y), (prj_x, prj_y)
 
 
-EXTRAP_FROM = None  # set in build(): first quarter where the price fit extrapolates
+EXTRAP_FROM = None  # set in build(): first quarter where the P&L price extrapolates a fit
 
 
 def _fig(title, ytitle, order=None, seam=True):
@@ -101,9 +108,8 @@ def _fig(title, ytitle, order=None, seam=True):
             x=PIN.label, y=1.02, yref="paper", text="reported | projected",
             showarrow=False, font=dict(size=10, color="rgba(128,128,128,0.9)"), xanchor="right",
         )
-        # Beyond here the price response is applied outside the tightness range it was
-        # fitted on. Marked on every chart, because it is the model's largest caveat and
-        # a reader should not have to go looking for it.
+        # Only when the P&L price itself is a fitted response applied outside its range
+        # (asp.price_source: fitted). The market path never sets this.
         if order and EXTRAP_FROM and EXTRAP_FROM in order:
             f.add_vrect(
                 x0=EXTRAP_FROM, x1=order[-1], line_width=0,
@@ -130,94 +136,152 @@ def _pair(f, rows, attr, name, hue, scale=1.0, hover=""):
     ))
 
 
+def _scenario_chart(runs, attr, title, ytitle, order, scale=1.0):
+    f = _fig(title, ytitle, order)
+    for name, hue in SCEN:
+        rr = [r for r in runs[name].rows if r.quarter.year >= 2020]
+        (ax, ay), (px, py) = _split(rr, attr, scale)
+        if name == "central":
+            f.add_trace(go.Scatter(x=ax, y=ay, name="reported", mode="lines",
+                                   line=dict(color=C["blue"][0], width=2.5)))
+        f.add_trace(go.Scatter(x=px, y=py, name=f"{name} (projected)", mode="lines",
+                               line=dict(color=C[hue][0], width=2, dash="dash")))
+    return f
+
+
+def _guide_checks(a, central) -> list[tuple[str, bool, str]]:
+    """Central against what Micron said. Diagnostics, not constraints: the guide
+    calibrates the first projected quarter and is checked, never imposed, after it."""
+    g = central.at((PIN + 1).label)
+    rng = a.value("guidance.eps_diluted")
+    fy27 = central.fiscal_year(2027)
+    revs = [r.revenue / 1e9 for r in fy27]
+    gms = [r.gross_margin for r in fy27]
+    seq = all(b > x for x, b in zip(revs, revs[1:]))
+    floor = min(gms[1:]) >= gms[0] - 1e-9
+    return [
+        (f"FQ1'27 GAAP EPS inside the ${rng['low']:.2f}&ndash;${rng['high']:.2f} guide "
+         f"(model ${g.eps:.2f}; revenue, margin, opex and tax are pinned, the rest is modelled)",
+         rng["low"] <= g.eps <= rng["high"], ""),
+        ("FY27 revenue grows every quarter (&ldquo;sequential revenue growth each quarter&rdquo;)",
+         seq, " &rarr; ".join(f"${v:.1f}bn" for v in revs)),
+        ("FQ1'27 is the FY27 gross-margin floor",
+         floor, " &rarr; ".join(f"{v:.2%}" for v in gms)),
+    ]
+
+
 def build() -> Path:
     a = load()
-    # TIGHT is deliberately absent. Its contested pool falls to ~20% served -- a
-    # tightness ~7x the range the price response was fitted on -- where the fitted
-    # exponential implies a 132x markup. That is not a projection; it is an exponential
-    # evaluated far from its data. The model reports out-of-domain rather than printing
-    # a number it cannot support. See asp.domain_limit_multiple.
-    runs = {s: pnl.run(a, s) for s in ("central", "loose")}
+    global PIN, EXTRAP_FROM
+    PIN = Quarter.parse(str(a.value("asp.pin_end")))
+    runs = {s: pnl.run(a, s) for s, _ in SCEN}
     central = runs["central"]
     rows = [r for r in central.rows if r.quarter.year >= 2020]
-    global EXTRAP_FROM
     ex = [r.quarter.label for r in central.rows if r.extrapolating]
     EXTRAP_FROM = ex[0] if ex else None
     ORDER = [r.quarter.label for r in rows]
     ORDER_FULL = [b.quarter.label for b in central.baseline.quarters]
+    source = str(a.value("asp.price_source"))
 
     figs: list[tuple[str, go.Figure, str]] = []
 
     # --- 1. Revenue -------------------------------------------------------
-    f = _fig("Revenue — reported through 2026Q2, projected after", "$bn per quarter", ORDER)
-    for name, hue in (("central", "blue"), ("loose", "aqua")):
-        rr = [r for r in runs[name].rows if r.quarter.year >= 2020]
-        (ax, ay), (px, py) = _split(rr, "revenue", 1e-9)
-        if name == "central":
-            f.add_trace(go.Scatter(x=ax, y=ay, name="reported", mode="lines",
-                                   line=dict(color=C["blue"][0], width=2.5)))
-        f.add_trace(go.Scatter(x=px, y=py, name=f"{name} (projected)", mode="lines",
-                               line=dict(color=C[hue][0], width=2, dash="dash")))
     figs.append((
         "Revenue",
-        f,
-        "Two of memoryProjection's three scenarios. They differ only in the bit lines; every "
-        "financial assumption is identical. TIGHT is omitted: its contested pool falls to ~20% "
-        "served, roughly 7\u00d7 beyond the range the price response was fitted on, where the "
-        "fitted exponential implies a 132\u00d7 markup \u2014 an exponential evaluated far from "
-        "its data, not a projection. The model declines to print it.",
+        _scenario_chart(runs, "revenue", f"Revenue — reported through {PIN.label}, projected after",
+                        "$bn per quarter", ORDER, 1e-9),
+        "memoryProjection's three scenarios. They differ only in the bit lines and the industry "
+        "price path that follows from them; every Micron-specific assumption is identical. "
+        "Loose collapses because upstream's loose supply jumps above demand right after the "
+        "observed data and that model has nothing that cuts supply to end a glut: read it as "
+        "&ldquo;a glut is possible&rdquo;, not as a path. It bottoms on Micron's own 2023 "
+        "trough markup.",
     ))
 
     # --- 2. EPS -----------------------------------------------------------
-    f = _fig("Diluted EPS", "$ per share per quarter", ORDER)
-    for name, hue in (("central", "blue"), ("loose", "aqua")):
-        rr = [r for r in runs[name].rows if r.quarter.year >= 2020]
-        (ax, ay), (px, py) = _split(rr, "eps")
-        if name == "central":
-            f.add_trace(go.Scatter(x=ax, y=ay, name="reported", mode="lines",
-                                   line=dict(color=C["blue"][0], width=2.5)))
-        f.add_trace(go.Scatter(x=px, y=py, name=f"{name} (projected)", mode="lines",
-                               line=dict(color=C[hue][0], width=2, dash="dash")))
     figs.append((
         "EPS",
-        f,
-        "FY23 is negative and is reported, not modelled. It is one of the four cycles the "
-        "price response is fitted on \u2014 and the spread between central and loose out to 2032 "
-        "is what bit-line uncertainty does once an exponential price response is applied to it.",
+        _scenario_chart(runs, "eps", "Diluted EPS (GAAP)", "$ per share per quarter", ORDER),
+        "FY23 is negative and is reported, not modelled. Tight sits below central through much "
+        "of 2029&ndash;2031: fewer bits, and upstream caps the industry price at what cloud "
+        "providers' budgets can pay, so scarcity stops raising price before it stops cutting "
+        "volume. Central's 2032 drop is upstream's price path falling as its gap turns negative.",
     ))
 
-    # --- 3. Price vs cost (ONE axis -- both are $/GB) ----------------------
-    f = _fig("Realised ASP vs cash cost per bit", "$ per GB (commodity-equivalent)", ORDER)
-    _pair(f, rows, "commodity_asp_per_gb", "ASP", "blue")
+    # --- 3. Price vs cost (ONE axis -- all $/GB) ---------------------------
+    f = _fig("Commodity ASP vs cash cost per bit", "$ per GB (commodity-equivalent)", ORDER)
+    _pair(f, rows, "commodity_asp_per_gb", "ASP (used)", "blue")
     _pair(f, rows, "cash_cost_per_gb", "cash cost", "orange")
+    prj = [r for r in rows if r.quarter > PIN]
+    f.add_trace(go.Scatter(
+        x=[r.quarter.label for r in prj], y=[r.fitted_asp_per_gb for r in prj],
+        name="fitted response (cross-check)", mode="lines",
+        line=dict(color=C["aqua"][0], width=2, dash="dot"),
+    ))
     figs.append((
         "The cycle",
         f,
-        "The distance between these two lines IS the gross margin story. Both are $/GB, so "
+        "The distance between ASP and cost IS the gross margin story; all three lines are $/GB, so "
         "they share an axis honestly. ASP is Micron's own realised revenue/bit through "
-        "2026Q2, then endogenous; cost is (COGS + inventory build) / production bits through "
-        "2026Q2, then a learning curve anchored on that last observed value.",
+        f"{PIN.label}, solved from the FQ1'27 revenue guide in {(PIN + 1).label}, then "
+        + ("Micron's guided price moved by memoryProjection's industry DRAM price path "
+           "(real, converted to nominal). " if source == "market" else "the fitted response. ")
+        + "The dotted line is what the fitted tightness response says instead: it decays from the "
+        "guided ~11&times; markup toward a fitted ~7&ndash;8&times;, which is why it was retired as "
+        "the default. Cost is derived from the filings, backed out of the GAAP margin guide in "
+        "FQ1'27, then a learning curve from there.",
     ))
 
     # --- 4. Margin (separate chart -- different unit) ----------------------
-    f = _fig("Gross margin", "%", ORDER)
-    _pair(f, rows, "gross_margin", "gross margin", "violet", 100.0)
     figs.append((
         "Margin",
-        f,
+        _scenario_chart(runs, "gross_margin", "Gross margin (GAAP)", "%", ORDER, 100.0),
         "A separate chart from price on purpose: margin is a percentage and ASP is $/GB. "
         "Sharing an axis would be a dual-axis chart, which invents a visual relationship "
-        "out of two arbitrary scales.",
+        "out of two arbitrary scales. The FY27 dip in central is D&A rising with the "
+        "doubled capex plan while upstream's industry price eases 5% in 2027Q2.",
     ))
 
-    # --- 5. The signal ----------------------------------------------------
+    # --- 5. July vs November ---------------------------------------------
+    if PREV_VINTAGE.exists():
+        from model.conf import deep_copy
+        fa = deep_copy(a)
+        fa.override("asp.price_source", "fitted")
+        lines = (
+            ("July 2026 (fitted price)", [r for r in summary.read(PREV_VINTAGE) if r["scenario"] == "central"],
+             dict(color=GREY, width=2, dash="dot")),
+            ("November, fitted price (cross-check)", summary.fy_rows(pnl.run(fa, "central")),
+             dict(color=C["aqua"][0], width=2, dash="dot")),
+            ("November 2026 (used)", summary.fy_rows(central), dict(color=C["blue"][0], width=2.5)),
+        )
+        f = _fig("FY revenue, central: July vs November projection", "$bn per fiscal year", seam=False)
+        for name, rr, line in lines:
+            rr = [r for r in rr if r["fy"] >= 2026]
+            f.add_trace(go.Scatter(x=[f"FY{int(r['fy'])}" for r in rr], y=[r["revenue_usd_bn"] for r in rr],
+                                   name=name, mode="lines+markers", line=line, marker=dict(size=8)))
+        fit30 = next(r["revenue_usd_bn"] for r in lines[1][1] if r["fy"] == 2030)
+        jul30 = next(r["revenue_usd_bn"] for r in lines[0][1] if r["fy"] == 2030)
+        now30 = next(r["revenue_usd_bn"] for r in lines[2][1] if r["fy"] == 2030)
+        figs.append((
+            "What moved since July",
+            f,
+            "July: memory vintage 2026-07, data through FY26Q3, fitted price response. November: "
+            "memory vintage 2026-11, data through FY26Q4, upstream's price path. The middle line "
+            "separates the two changes. New bits with the OLD price engine would have LOWERED the "
+            f"projection (FY30 ${fit30:,.0f}bn against July's ${jul30:,.0f}bn): November's "
+            "tightness plateaus near +0.35 instead of climbing to +0.50, and the fitted markup "
+            "decays from the guided ~11&times; toward ~7&ndash;8&times;. The rise to "
+            f"${now30:,.0f}bn is the price engine: upstream's industry price keeps rising into 2029 "
+            "while Micron's cost keeps falling, so the markup holds at 11&ndash;14&times;. "
+            "That is the single largest judgement in this revision.",
+        ))
+
+    # --- 6. The signal ----------------------------------------------------
     f = _fig(
         "Contested-pool served fraction — why the inventory swing is in the price signal",
         "served fraction (1.0 = balanced)",
         ORDER_FULL,
     )
-    sig_rows = [r for r in central.rows if r.quarter.year >= 2018]
-    base = {b.quarter: b for b in central.baseline.quarters}
     from model import tightness as tmod
     sigs = tmod.series(a, central.baseline)
     xs = [s.quarter.label for s in sigs]
@@ -236,17 +300,15 @@ def build() -> Path:
     figs.append((
         "The signal",
         f,
-        "The whole design rests on this. The red line — the obvious construction, excluding "
-        "the inventory swing — says 2023 was TIGHTER than the 2021 boom. 2023 is the deepest "
-        "glut in memory history: Micron ran a −32.7% gross margin. The destock IS the glut, "
-        "and it lives entirely in the inventory segment. Feed the red line to a price response "
-        "and it projects a price spike into that trough.",
+        "Feeds the fitted response (now the cross-check). The red line — the obvious "
+        "construction, excluding the inventory swing — says 2023 was TIGHTER than the 2021 "
+        "boom. 2023 is the deepest glut in memory history: Micron ran a −32.7% gross margin. "
+        "The destock IS the glut, and it lives entirely in the inventory segment.",
     ))
 
-    # --- 6. Revenue mix ---------------------------------------------------
+    # --- 7. Revenue mix ---------------------------------------------------
     f = _fig("Projected revenue by product", "$bn per quarter",
              [r.quarter.label for r in central.rows if r.quarter > PIN], seam=False)
-    prj = [r for r in rows if r.quarter > PIN]
     xs = [r.quarter.label for r in prj]
     for attr, name, hue in (
         ("dram_revenue", "commodity DRAM", "blue"),
@@ -260,49 +322,53 @@ def build() -> Path:
     figs.append((
         "Mix",
         f,
-        "Projected only — Micron does not report this split, so showing it over the actuals "
-        "window would be modelled numbers dressed as reported ones.",
+        "Projected only. Micron reports DRAM and NAND revenue (73% / 26% in FQ4'26, which the "
+        "model's price ratios reproduce) but not commodity DRAM vs HBM.",
     ))
 
     # --- table ------------------------------------------------------------
+    prev_c = {}
+    if PREV_VINTAGE.exists():
+        prev_c = {int(r["fy"]): r for r in summary.read(PREV_VINTAGE) if r["scenario"] == "central"}
     fy_rows = []
-    for fy in range(2020, 2034):
-        rr = central.fiscal_year(fy)
-        if len(rr) < 4:
-            continue
-        rev = sum(x.revenue for x in rr)
-        gp = sum(x.gross_profit for x in rr)
-        ni = sum(x.net_income for x in rr)
-        eps = sum(x.eps for x in rr)
-        fcf = sum(x.fcf for x in rr)
-        capex = sum(x.capex for x in rr)
-        # Three states, so three labels. A fiscal year straddling the seams gets the
-        # honest mixed one rather than being rounded to whichever end it mostly is.
-        if all(x.is_actual for x in rr):
-            kind = "reported"
-        elif any(x.is_actual for x in rr):
-            kind = "part-reported"
-        elif any(x.is_guided for x in rr):
-            kind = "part-guided"
-        else:
-            kind = "projected"
+    for r in summary.fy_rows(central, 2020, 2033):
+        rr = central.fiscal_year(r["fy"])
+        p = prev_c.get(r["fy"])
         fy_rows.append(dict(
-            fy=f"FY{fy}", kind=kind, rev=rev / 1e9, gm=gp / rev * 100,
-            ni=ni / 1e9, eps=eps, fcf=fcf / 1e9, capex=capex / 1e9,
+            fy=f"FY{r['fy']}", kind=r["kind"], rev=r["revenue_usd_bn"], gm=r["gross_margin"] * 100,
+            ni=r["net_income_usd_bn"], eps=r["eps"], fcf=r["fcf_usd_bn"], capex=r["capex_usd_bn"],
             asp=sum(x.commodity_asp_per_gb for x in rr) / 4,
             cost=sum(x.cash_cost_per_gb for x in rr) / 4,
+            jrev=f"{p['revenue_usd_bn']:,.1f}" if p and r["fy"] >= 2026 else "",
+            jeps=f"{p['eps']:,.2f}" if p and r["fy"] >= 2026 else "",
         ))
 
     thead = "".join(f"<th>{h}</th>" for h in (
         "fiscal year", "", "revenue $bn", "gross margin %", "net income $bn",
-        "EPS $", "FCF $bn", "capex $bn", "ASP $/GB", "cash cost $/GB"))
+        "EPS $", "FCF $bn", "capex $bn", "ASP $/GB", "cash cost $/GB", "July rev $bn", "July EPS $"))
     tbody = "".join(
         "<tr class='{cls}'><td class='fy'>{fy}</td><td class='kind'>{kind}</td>"
         "<td>{rev:,.1f}</td><td>{gm:,.1f}</td><td>{ni:,.1f}</td><td>{eps:,.2f}</td>"
-        "<td>{fcf:,.1f}</td><td>{capex:,.1f}</td><td>{asp:,.2f}</td><td>{cost:,.2f}</td></tr>".format(
+        "<td>{fcf:,.1f}</td><td>{capex:,.1f}</td><td>{asp:,.2f}</td><td>{cost:,.2f}</td>"
+        "<td class='prev'>{jrev}</td><td class='prev'>{jeps}</td></tr>".format(
             cls="act" if r["kind"] == "reported" else "prj", **r)
         for r in fy_rows
     )
+
+    scen_rows = ""
+    for name, _ in SCEN:
+        fy = {x["fy"]: x for x in summary.fy_rows(runs[name])}
+        scen_rows += (
+            f"<tr><td class='fy'>{name}</td><td>{fy[2027]['revenue_usd_bn']:,.1f}</td>"
+            f"<td>{fy[2027]['gross_margin'] * 100:,.1f}</td><td>{fy[2027]['eps']:,.2f}</td>"
+            f"<td>{fy[2028]['revenue_usd_bn']:,.1f}</td><td>{fy[2028]['eps']:,.2f}</td></tr>"
+        )
+
+    checks = ""
+    for text, ok, detail in _guide_checks(a, central):
+        cls, mark = ("ok", "&#10003; consistent") if ok else ("miss", "&#10007; not consistent")
+        extra = f"<br><span class='detail'>{detail}</span>" if detail else ""
+        checks += f"<li class='{cls}'><span class='mark'>{mark}</span> {text}{extra}</li>"
 
     body = "".join(
         f"<section><h2>{name}</h2><p class='note'>{note}</p>"
@@ -310,8 +376,15 @@ def build() -> Path:
         for name, fig, note in figs
     )
 
-    upstream = f"{a.value('upstream.sqlite_path')} (sha256 {sha256(sqlite_path(a))[:12]})"
-    html = TEMPLATE.format(plotlyjs=get_plotlyjs(), body=body, thead=thead, tbody=tbody, upstream=upstream)
+    fy27 = summary.fy_rows(central)
+    f27 = next(x for x in fy27 if x["fy"] == 2027)
+    upstream_ref = f"{a.value('upstream.sqlite_path')} (sha256 {sha256(sqlite_path(a))[:12]})"
+    html = TEMPLATE.format(
+        plotlyjs=get_plotlyjs(), body=body, thead=thead, tbody=tbody, upstream=upstream_ref,
+        scen_rows=scen_rows, checks=checks,
+        r2=a.scalar("asp.response_r2"), n_fit=35,
+        fy27_rev=f27["revenue_usd_bn"], fy27_eps=f27["eps"],
+    )
     OUT.write_text(html)
     return OUT
 
@@ -355,9 +428,9 @@ TEMPLATE = """<!doctype html>
   .sub .muted {{ color: var(--text-muted); font-size: 13px; }}
   @media (prefers-color-scheme: dark) {{ .callout strong.warn {{ color: #fb923c; }} }}
   .tablewrap {{ overflow-x: auto; border: 1px solid var(--rule); border-radius: 10px; }}
-  table {{ border-collapse: collapse; width: 100%; font-size: 13px;
+  table {{ border-collapse: collapse; width: 100%; font-size: 12.5px;
            font-variant-numeric: tabular-nums; }}
-  th, td {{ padding: .5rem .7rem; text-align: right; border-bottom: 1px solid var(--rule);
+  th, td {{ padding: .5rem .5rem; text-align: right; border-bottom: 1px solid var(--rule);
             white-space: nowrap; }}
   th {{ color: var(--text-muted); font-weight: 600; text-align: right;
         position: sticky; top: 0; background: var(--surface-2); }}
@@ -368,63 +441,80 @@ TEMPLATE = """<!doctype html>
   footer {{ margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--rule);
             color: var(--text-muted); font-size: 12.5px; }}
   code {{ background: var(--surface-2); padding: .1em .35em; border-radius: 4px; font-size: .9em; }}
+  td.prev {{ color: var(--text-muted); }}
+  ul.checks {{ list-style: none; padding: 0; margin: .5rem 0 0; font-size: 13.5px; }}
+  ul.checks li {{ padding: .55rem .8rem; border: 1px solid var(--rule); border-radius: 8px;
+                  margin: .4rem 0; background: var(--surface-2); color: var(--text-secondary); }}
+  ul.checks .mark {{ font-weight: 600; color: var(--text-primary); margin-right: .35rem; }}
+  ul.checks li.miss {{ border-left: 3px solid #eb6834; }}
+  ul.checks li.ok {{ border-left: 3px solid #1baf7a; }}
+  ul.checks .detail {{ color: var(--text-muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }}
+  .small {{ max-width: 820px; }}
 </style></head><body>
 
 <h1>Micron — revenue &amp; earnings, 2020–2032</h1>
-<p class="sub">Reported through <strong>fiscal Q3 2026</strong> (quarter ended 28 May 2026,
-$41.5bn) &middot; company-guided for <strong>FQ4&rsquo;26</strong> and <strong>FQ1&rsquo;27</strong>
-&middot; modelled thereafter, to FY2033 Q1.<br>
+<p class="sub">November 2026 projection. Reported through <strong>fiscal Q4 2026</strong>
+(quarter ended 3 Sep 2026, $54.2bn, a 14-week quarter) &middot; company-guided for
+<strong>FQ1&rsquo;27</strong> ($61.5bn &plusmn; $1.5bn) &middot; projected thereafter.
+Central FY27: <strong>${fy27_rev:,.0f}bn revenue, ${fy27_eps:,.2f} GAAP EPS</strong>.<br>
 <span class="muted">Charts are indexed by calendar quarter to line up with the bit model;
-Micron&rsquo;s fiscal year runs one quarter ahead, so FQ3&rsquo;26 = calendar 2026Q2.</span></p>
+Micron&rsquo;s fiscal year runs one quarter ahead, so FQ4&rsquo;26 = calendar 2026Q3.</span></p>
 
 <div class="callout">
 <strong>What this is.</strong> A financial layer on top of <code>memoryProjection</code>,
-which models global DRAM/NAND <em>bits</em>. That model's supply and demand are taken
-<strong>as given</strong> — never recomputed, overlaid or perturbed. The scenarios shown
-are its own <em>central</em> and <em>loose</em>; they differ only in the bit lines. Every
-number here means: <strong>what Micron earns if those bit lines are right.</strong><br><br>
+which models global DRAM/NAND <em>bits</em> and, since November, the industry DRAM
+<em>price</em>. Its supply, demand and price path are taken <strong>as given</strong> &mdash;
+never recomputed, overlaid or perturbed. The scenarios are its <em>tight</em>, <em>central</em>
+and <em>loose</em>. Every number here means: <strong>what Micron earns if those lines are
+right.</strong><br><br>
 
-<strong>Three states, not two.</strong> Quarters are <em>reported</em> (through FQ3&rsquo;26,
-Micron&rsquo;s filings verbatim), <em>guided</em> (FQ4&rsquo;26 and FQ1&rsquo;27 &mdash; the
-company guided ~$50bn for FQ4; central uses $51bn because Micron has beaten its own guide
-every quarter of this up-cycle, with 49&ndash;55 as the beat/miss range; then +17%/quarter
-contract price rises per consensus), and <em>fitted</em> (FQ2&rsquo;27 onward). Guidance is
-not reported data and is never counted as such.<br><br>
+<strong>Three states.</strong> Quarters are <em>reported</em> (through FQ4&rsquo;26, Micron&rsquo;s
+GAAP filings verbatim), <em>guided</em> (FQ1&rsquo;27: revenue at the guide midpoint, GAAP gross
+margin 85.95%, opex $2.31bn and tax 15.5% pinned; D&amp;A, other income and share count
+modelled), and <em>projected</em>. Micron beat its revenue guide by 24% in FQ3&rsquo;26 and
+8.5% in FQ4&rsquo;26; that record is upside to central, not built into it.<br><br>
 
-<strong>The price response is fitted, not chosen.</strong> Micron's realised markup over
-cash cost is regressed on the tightness it actually faced across all 34 reported quarters
-(2018Q1–2026Q2): <code>log(markup) = 0.85 + 0.08·T + 2.58·T̄₄</code>, R² = 0.53, with the
-residual decaying at a fitted AR(1) ρ = 0.92. Two things fell out of it — price tracks
-<em>sustained</em> tightness (the 4-quarter average carries the whole signal, the current
-quarter ~none), and the fitted markup at zero tightness (2.33×) independently reproduces
-the 2.39× measured from balanced quarters by a different method.<br><br>
+<strong>Price after FQ1&rsquo;27 follows upstream&rsquo;s industry path.</strong> Micron&rsquo;s
+guided price is moved by memoryProjection&rsquo;s industry DRAM price (real 2025 $/GB, indexed
+to 2026Q4 and converted to nominal at 2.5%/yr), with a floor at Micron&rsquo;s lowest observed
+markup over cash cost (1.17&times;, 2023Q1). Until November the model set price itself from a
+response fitted to Micron&rsquo;s record (refit now: n = {n_fit}, R&sup2; = {r2:.2f}). On the
+November bit lines that response has central revenue falling every quarter after the guide,
+against both Micron&rsquo;s outlook and upstream&rsquo;s price layer, so it is now shown as a
+dotted cross-check rather than used.<br><br>
 
-<strong class="warn">Read this before the numbers: the projection extrapolates.</strong>
-The fit spans tightness |T| ≤ 0.24. Upstream's central out-years reach +0.50 — about 2×
-beyond any quarter on record — where the fitted response implies a markup around 11×
-cash cost. The highest Micron has <em>ever</em> achieved is 8.58×, in 2026Q2, in the
-tightest market in the industry's history. The shaded region on every chart marks where
-this applies. Upstream's <em>tight</em> scenario is omitted entirely: it runs ~7× beyond
-the fitted range, and the model reports out-of-domain rather than printing a number it
-cannot support. These projections are the logical consequence of two inputs — upstream's
-bit lines, and a response fitted to Micron's record. They are not evidence that either
-holds that far.<br><br>
-
-<strong>Also: R² = 0.53.</strong> Roughly half the quarter-to-quarter variation in
-Micron's markup is <em>not</em> explained by tightness — utilisation, contract timing,
-mix and execution live in the other half. And the out-years contain no down-cycle
-because upstream's bit lines contain none. This model inherits that; it does not
-independently confirm it.
+<strong class="warn">Read this before the numbers.</strong> Upstream&rsquo;s price path is a
+<em>path</em>, not a clearing price: its own docs say the level cannot be identified from
+quantities that carry 5&ndash;15% error. Loose is a glut that nothing in either model ends.
+And the out-years inherit upstream&rsquo;s view that AI demand stays inelastic and cloud budgets
+cap price &mdash; this model does not independently confirm either.
 </div>
+
+<section>
+<h2>Against Micron&rsquo;s guide (central)</h2>
+<p class="note">Guidance calibrates the first projected quarter and is <em>checked</em>, never
+imposed, after it. Where central disagrees with what Micron said, the disagreement comes from
+upstream&rsquo;s price path or the cost and D&amp;A assumptions, and is shown rather than tuned away.</p>
+<ul class="checks">{checks}</ul>
+</section>
+
+<section>
+<h2>Scenarios</h2>
+<p class="note">Fiscal years. FY27 includes the guided FQ1, whose revenue spans the guide
+range across scenarios ($60.0bn loose, $63.0bn tight).</p>
+<div class="tablewrap small"><table><thead><tr><th>scenario</th><th>FY27 revenue $bn</th>
+<th>FY27 gross margin %</th><th>FY27 EPS $</th><th>FY28 revenue $bn</th><th>FY28 EPS $</th></tr></thead>
+<tbody>{scen_rows}</tbody></table></div>
+</section>
 
 {body}
 
 <section>
-<h2>Fiscal year summary</h2>
-<p class="note">Micron's fiscal year ends in late August, so FY2026 spans calendar
-2025Q4–2026Q3: three quarters reported (FQ1–FQ3) and one guided (FQ4, the ~$50bn guide,
-carried at $51bn). FY2027 is part-guided — FQ1'27 carries the +17% consensus, the rest is
-fitted. The table view is also the accessibility relief for the chart palette.</p>
+<h2>Fiscal year summary (central)</h2>
+<p class="note">Micron's fiscal year ends in late August or early September, so FY2027 spans
+calendar 2026Q4&ndash;2027Q3: FQ1 guided, the rest projected. The last two columns are the
+July 2026 projection (<code>vintages/2026-07/fy_summary.csv</code>). The table view is also
+the accessibility relief for the chart palette.</p>
 <div class="tablewrap"><table><thead><tr>{thead}</tr></thead><tbody>{tbody}</tbody></table></div>
 </section>
 

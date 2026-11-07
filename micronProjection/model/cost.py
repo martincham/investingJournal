@@ -163,12 +163,18 @@ class CostQuarter:
     is_actual: bool
 
 
-def _years_since(q: Quarter, base_year: float) -> float:
-    return q.fractional_year - base_year
+def modelled_commodity_cost_per_bit(
+    a: Assumptions, q: Quarter, anchor_q: Quarter, anchor_cost_per_bit: float
+) -> float:
+    """The learning curve. Commodity DRAM cash cost per bit, compounded from an anchor.
 
-
-def modelled_commodity_cost_per_bit(a: Assumptions, q: Quarter) -> float:
-    """The learning curve. Commodity DRAM cash cost per bit.
+    ANCHORED ON THE LAST KNOWN QUARTER, passed in rather than stored. Since the November
+    2026 revision that is the guided quarter: Micron's GAAP gross-margin guide pins its
+    COGS, and model/pnl.py backs the cash cost per bit out of it. Without a guide it is
+    the last reported quarter's derived cost. Either way the curve starts from a number
+    Micron published, never from a constant typed into a YAML that drifts out of date
+    every time a quarter is reported (the old cost.commodity_cash_cost_per_gb_base was
+    re-derived by hand three times).
 
     The rate DECAYS: bits per wafer used to come from lithographic shrink and now come
     from stacking and process tweaks, which are slower and dearer. Assuming a constant
@@ -176,14 +182,15 @@ def modelled_commodity_cost_per_bit(a: Assumptions, q: Quarter) -> float:
     the second-easiest way (after a compounding density premium) to make this model
     quietly bullish.
     """
-    base_year = a.scalar("cost.base_year")
-    base = a.scalar("cost.commodity_cash_cost_per_gb_base") / units.GIGA / units.BITS_PER_BYTE
     rate = interpolate_annual(a.series("cost.learning_rate_annual"), q)
-    return base * (1.0 - rate) ** _years_since(q, base_year)
+    years = q.fractional_year - anchor_q.fractional_year
+    return anchor_cost_per_bit * (1.0 - rate) ** years
 
 
-def modelled(a: Assumptions, mu: MicronBits, q: Quarter) -> CostQuarter:
-    commodity = modelled_commodity_cost_per_bit(a, q)
+def modelled(
+    a: Assumptions, mu: MicronBits, q: Quarter, anchor_q: Quarter, anchor_cost_per_bit: float
+) -> CostQuarter:
+    commodity = modelled_commodity_cost_per_bit(a, q, anchor_q, anchor_cost_per_bit)
     hbm_mult = interpolate_annual(a.series("cost.hbm_cost_multiple"), q)
     nand_ratio = interpolate_annual(a.series("cost.nand_cost_ratio"), q)
 

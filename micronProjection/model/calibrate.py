@@ -20,11 +20,12 @@ set by hand. Three problems, in ascending order of seriousness:
 
 WHAT THE DATA SUPPORTS. A level relationship between markup and SUSTAINED tightness:
 
-    log(markup) = a + b * T + d * T_ma4        (R2 = 0.53, n = 34)
+    log(markup) = a + b * T + d * T_ma4        (R2 = 0.64, n = 35; July: 0.53, n = 34)
 
 with the residual decaying at a fitted AR(1) rho. Two findings fell out of it:
 
-  - b is ~0 and d carries everything. Price responds to the 4-quarter AVERAGE of
+  - d carries most of it (and in July, everything: b was ~0; the November refit, with
+    upstream's restated history and 2026Q3 in the window, puts b at 0.43). Price responds to the 4-quarter AVERAGE of
     tightness, not the current quarter. That is the hysteresis the anchor could not fit:
     T = +0.215 gave markup 2.54 in 2021Q2 but T = +0.225 gave 8.58 in 2026Q2, because
     2026Q2 was the fourth consecutive tight quarter and 2021Q2 was the first.
@@ -32,8 +33,9 @@ with the residual decaying at a fitted AR(1) rho. Two findings fell out of it:
     2.39x measured from the seven balanced quarters by a different method. Two routes,
     2% apart. That agreement is the main reason to trust the intercept.
 
-WHAT IS STILL NOT KNOWN, and no amount of fitting will fix it: the observed window spans
-|T| <= 0.27. Upstream's out-years run T = +0.30 to +0.65. Applying the fit there is an
+WHAT IS STILL NOT KNOWN, and no amount of fitting will fix it. In July the observed
+window spanned |T| <= 0.27 against out-years of +0.30 to +0.65; since November it spans
+|T| <= 0.37, which covers central but not tight (+0.5 to +1.0). Applying the fit there is an
 extrapolation to 2.4x beyond any quarter on record, and the model says so rather than
 hiding it behind a saturation term (which the earlier cut invented, at a cap picked out
 of the air, and which had the effect of making a market getting 2.6x tighter barely move
@@ -165,7 +167,7 @@ def main() -> None:
     print()
     print("log(markup) = a + b*T + d*T_ma4")
     print(f"  a     {f.a:+.4f}     (markup at T=0: {f.markup_at_zero:.3f}x)")
-    print(f"  b     {f.b:+.4f}     (current-quarter tightness: ~0, price tracks the average)")
+    print(f"  b     {f.b:+.4f}     (current-quarter tightness)")
     print(f"  d     {f.d:+.4f}     (4-quarter average tightness: carries the signal)")
     print(f"  rho   {f.rho:+.4f}     (residual AR(1); half-life "
           f"{math.log(0.5) / math.log(abs(f.rho)):.1f} quarters)")

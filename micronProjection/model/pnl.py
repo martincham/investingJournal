@@ -1,10 +1,15 @@
 """The income statement, cash flow and EPS. The whole model assembled.
 
-**The rule this file exists to honour: real numbers through 2026Q2, projection after.**
+**The rule this file exists to honour: real numbers through 2026Q3, projection after.**
 There is exactly one boundary, and all three of its definitions coincide -- upstream's
-`actuals_end`, Micron's last reported quarter (FQ3'26), and `asp.pin_end`. Before it,
+`actuals_end`, Micron's last reported quarter (FQ4'26), and `asp.pin_end`. Before it,
 every line is Micron's reported figure, verbatim, with no modelling of any kind. After
 it, every line is modelled. `is_actual` says which, on every row.
+
+One quarter sits between: the GUIDED quarter (FQ1'27, calendar 2026Q4). Its revenue,
+GAAP gross margin, opex and tax rate are Micron's guide (assumptions/guidance.yaml); its
+D&A, other income and share count are modelled, so its EPS landing inside the guided
+range is a test of the parts that are not pinned. `is_guided` marks it.
 
 The chain, per projected quarter:
 
@@ -76,8 +81,10 @@ class Row:
     markup: float = 0.0
     tightness: float = 0.0
     tightness_ma4: float = 0.0
-    extrapolating: bool = False   # T beyond the range the price response was fitted on
-    is_guided: bool = False       # company guidance / consensus, not reported and not fitted
+    extrapolating: bool = False   # P&L price is the fitted response, beyond its fitted range
+    is_guided: bool = False       # company guidance, not reported and not modelled
+    fitted_asp_per_gb: float = 0.0   # cross-check: what the fitted response says
+    is_floored: bool = False      # price sat on Micron's own trough markup
 
     @property
     def gross_margin(self) -> float:
@@ -145,53 +152,67 @@ def _pinned_asp_per_bit(
     return out
 
 
+def _guided_quarter(a: Assumptions, pin_end: Quarter) -> Quarter | None:
+    """The one guided quarter, or None. guidance_end must be pin_end + 1 or earlier."""
+    guidance_end = Quarter.parse(str(a.value("guidance.guidance_end")))
+    if guidance_end <= pin_end:
+        return None
+    if guidance_end != pin_end + 1:
+        raise ValueError(
+            f"guidance.guidance_end {guidance_end} must be asp.pin_end + 1 ({pin_end + 1}): "
+            f"the model carries one guided quarter, and a stale guide past a reported quarter "
+            f"would override an actual"
+        )
+    return guidance_end
+
+
+def _guided_revenue(a: Assumptions, scenario: str) -> float:
+    targets = a.value("guidance.revenue_usd_bn")
+    return float(targets.get(scenario, targets["central"])) * BN
+
+
 def _guided_asp_per_bit(
     a: Assumptions,
     scenario: str,
     mu: dict[Quarter, micron_mod.MicronBits],
-    costs: dict[Quarter, float],
     pin_end: Quarter,
 ) -> dict[Quarter, float]:
-    """ASP for the quarters Micron has guided but not yet reported.
+    """Commodity ASP for the guided quarter, SOLVED from the revenue guide.
 
-    Two quarters, two different sources, and they cross-check each other:
-
-      FQ4'26 (calendar 2026Q3): SOLVED from the guided revenue. ASP is whatever makes
-        bits x price reproduce the guide, so the revenue number is hit exactly rather
-        than approached. Micron guided ~$50bn; central uses $51bn because it has beaten
-        its own guide every quarter of this up-cycle.
-      FQ1'27 (calendar 2026Q4): the guided ASP carried forward at the +17%/quarter
-        analyst consensus.
-
-    The implied FQ4 ASP move (~+18% QoQ) independently reproduces that same 17%
-    consensus -- two inputs from different places agreeing, which is the main reason to
-    believe either.
+    ASP is whatever makes bits x price reproduce the guide, so revenue is hit exactly
+    rather than approached. Shipments == production here, as in every projected quarter.
     """
-    guidance_end = Quarter.parse(str(a.value("guidance.guidance_end")))
-    if guidance_end <= pin_end:
+    g = _guided_quarter(a, pin_end)
+    if g is None or g not in mu:
         return {}
+    price_eq = cost_mod.commodity_equivalent_bits(a, mu[g], g)
+    return {g: _guided_revenue(a, scenario) / price_eq} if price_eq > 0 else {}
 
-    targets = a.value("guidance.fq4_2026_revenue_usd_bn")
-    target_bn = float(targets.get(scenario, targets["central"]))
-    rise = a.scalar("guidance.price_rise_per_quarter_next_2q")
 
-    guided_q = pin_end + 1                     # FQ4'26 -- the guided quarter
-    m = mu.get(guided_q)
-    if m is None:
+def _guided_cost_per_bit(
+    a: Assumptions,
+    scenario: str,
+    mu: dict[Quarter, micron_mod.MicronBits],
+    pin_end: Quarter,
+) -> dict[Quarter, float]:
+    """Commodity cash cost per bit for the guided quarter, backed out of the GAAP margin.
+
+        COGS      = revenue_guide x (1 - gross_margin_guide)
+        cash COGS = COGS - D&A                      (the P&L adds D&A back as a line)
+        cost/bit  = cash COGS / cost-weighted bits
+
+    The P&L then rebuilds COGS from exactly these pieces, so the guided quarter lands on
+    the guided margin by construction -- and the cost curve compounds forward from a cost
+    Micron effectively published, rather than from FQ4'26's derived cost, which carries
+    a 98-day quarter and incentive comp absorbed into inventory.
+    """
+    g = _guided_quarter(a, pin_end)
+    if g is None or g not in mu:
         return {}
-
-    # Shipments == production here: Micron's warehouse has been empty since 2026Q1
-    # (days-of-inventory flat ~122), so there is no drain left to ship out of.
-    price_eq = cost_mod.commodity_equivalent_bits(a, m, guided_q)
-    if price_eq <= 0:
-        return {}
-
-    out = {guided_q: (target_bn * BN) / price_eq}
-    q = guided_q + 1
-    while q <= guidance_end:
-        out[q] = out[q - 1] * (1.0 + rise)
-        q = q + 1
-    return out
+    cogs = _guided_revenue(a, scenario) * (1.0 - a.scalar("guidance.gross_margin"))
+    dna = interpolate_annual(a.series("opex.dna_usd_bn_per_quarter"), g) * BN
+    cost_eq = cost_mod.commodity_equivalent_cost_bits(a, mu[g], g)
+    return {g: (cogs - dna) / cost_eq} if cost_eq > 0 else {}
 
 
 def _actual_row(r: ReportedQuarter, mu: micron_mod.MicronBits, br, asp_pb, cost_pb, t) -> Row:
@@ -241,20 +262,32 @@ def run(a: Assumptions, scenario: str = "central") -> Run:
     bridge = {b.quarter: b for b in cost_mod.bridge(a, reported_list, mu)}
 
     pin_end = Quarter.parse(str(a.value("asp.pin_end")))
+    guided_q = _guided_quarter(a, pin_end)
 
-    # Cash cost per bit: derived from the filings through the pin, modelled after.
-    costs: dict[Quarter, float] = {}
+    # Cash cost per bit: derived from the filings through the pin, backed out of the
+    # margin guide for the guided quarter, then the learning curve from the last of those.
+    costs: dict[Quarter, float] = {
+        q: bridge[q].cash_cost_per_bit  # EXCLUDES D&A; the P&L adds it back
+        for q in sorted(sigs) if q <= pin_end and q in bridge
+    }
+    costs.update(_guided_cost_per_bit(a, scenario, mu, pin_end))
+    anchor_q = max(costs)
     for q in sorted(sigs):
-        if q <= pin_end and q in bridge:
-            costs[q] = bridge[q].cash_cost_per_bit  # EXCLUDES D&A; the P&L adds it back
-        elif q > pin_end:
-            costs[q] = cost_mod.modelled_commodity_cost_per_bit(a, q)
+        if q > anchor_q:
+            costs[q] = cost_mod.modelled_commodity_cost_per_bit(a, q, anchor_q, costs[anchor_q])
 
     pinned = _pinned_asp_per_bit(a, reported, bridge, mu)
-    guided = _guided_asp_per_bit(a, scenario, mu, costs, pin_end)
+    guided = _guided_asp_per_bit(a, scenario, mu, pin_end)
+    market = None
+    if str(a.value("asp.price_source")) == "market":
+        market = {q: m.price_usd_per_gb for q, m in upstream.load_market(a, scenario).items()}
     asps = {
         x.quarter: x
-        for x in asp_mod.series(a, [sigs[q] for q in sorted(sigs)], costs, pinned, guided)
+        for x in asp_mod.series(a, [sigs[q] for q in sorted(sigs)], costs, pinned, guided, market)
+    }
+    capex_guide = {
+        Quarter.parse(str(k)): float(v)
+        for k, v in a.value("guidance.capex_net_usd_bn_by_quarter").items()
     }
 
     rows: list[Row] = []
@@ -308,6 +341,10 @@ def run(a: Assumptions, scenario: str = "central") -> Run:
 
         rnd = interpolate_annual(a.series("opex.rnd_usd_bn_per_quarter"), q) * BN
         sga = interpolate_annual(a.series("opex.sga_usd_bn_per_quarter"), q) * BN
+        if q == guided_q:
+            # The GAAP opex guide, split in the series' own R&D : SG&A ratio.
+            scale = a.scalar("guidance.opex_usd_bn") * BN / (rnd + sga)
+            rnd, sga = rnd * scale, sga * scale
         ebit = gross - rnd - sga
         other = interpolate_annual(a.series("opex.other_income_usd_bn_per_quarter"), q) * BN
         pretax = ebit + other
@@ -316,10 +353,18 @@ def run(a: Assumptions, scenario: str = "central") -> Run:
         # rather than booking the full shield; modelling a benefit would make the trough
         # look ~15% less bad than it was.
         rate = interpolate_annual(a.series("opex.tax_rate"), q)
+        if q == guided_q:
+            rate = a.scalar("guidance.tax_rate")
         tax = pretax * rate if pretax > 0 else 0.0
         net = pretax - tax
 
-        capex = revenue * interpolate_annual(a.series("opex.capex_intensity"), q)
+        if q in capex_guide:
+            # Micron's FY27 plan is NET of government incentives; the model's capex line
+            # is GROSS (EDGAR), so the expected incentives are added back.
+            incent = interpolate_annual(a.series("capital.capex_incentives_usd_bn_per_quarter"), q)
+            capex = (capex_guide[q] + incent) * BN
+        else:
+            capex = revenue * interpolate_annual(a.series("opex.capex_intensity"), q)
         ocf = net + dna
         fcf = ocf - capex
 
@@ -375,6 +420,8 @@ def run(a: Assumptions, scenario: str = "central") -> Run:
                 tightness_ma4=ap.tightness_ma4,
                 extrapolating=ap.extrapolating,
                 is_guided=ap.is_guided,
+                fitted_asp_per_gb=ap.fitted_commodity_per_gb,
+                is_floored=ap.is_floored,
             )
         )
         prev_shares = shares

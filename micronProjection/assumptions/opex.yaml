@@ -1,11 +1,17 @@
 # Everything below gross profit.
 #
-# Through 2026Q2 these are not used at all -- the income statement is Micron's reported
-# one, verbatim. They only drive the projection.
+# Through 2026Q3 these are not used at all -- the income statement is Micron's reported
+# one, verbatim. They only drive the projection. The guided quarter (2026Q4) takes its
+# opex total and tax rate from guidance.yaml; these series set everything after it.
+#
+# November 2026 revision: the 2026-2028 anchors were re-set from FY26 actuals
+# (data/reported/quarterly_gaap.csv) and the FY27 guide. They had been set in July,
+# before FQ4'26 roughly doubled SG&A (incentive comp, $300m community investment) and
+# before Micron guided FY27 opex +$2.5bn and capex ~$55bn.
 
 rnd_usd_bn_per_quarter:
-  value: {2020: 0.61, 2022: 0.77, 2023: 0.80, 2025: 0.90, 2026: 1.05,
-          2028: 1.30, 2030: 1.50, 2032: 1.70}
+  value: {2020: 0.61, 2022: 0.77, 2023: 0.80, 2025: 0.90, 2026: 1.45, 2027: 2.05,
+          2028: 2.30, 2030: 2.70, 2032: 3.00}
   unit: billions_usd_per_quarter
   source: DERIVED
   confidence: medium
@@ -16,20 +22,26 @@ rnd_usd_bn_per_quarter:
     rule would have cut R&D 50% in the trough and doubled it in the FY26 boom, which is
     the opposite of what the company did and would flatter trough EPS badly.
     Grown roughly with the node cadence and the HBM/3D-DRAM program load.
+    Nov 2026: FY26 R&D ran $1.17bn -> $1.78bn/quarter (91-day basis). Micron guided FY27
+    opex +$2.5bn, "primarily from higher R&D" and incentive comp. 2027 is set so FY27
+    R&D + SG&A totals ~$10.1bn GAAP (FY26 $7.6bn + $2.5bn) with FQ1 at the $2.31bn guide;
+    tests/test_guidance.py checks the total. Out-years grow ~7%/yr, slower than revenue.
 
 sga_usd_bn_per_quarter:
-  value: {2020: 0.25, 2022: 0.28, 2023: 0.29, 2025: 0.34, 2026: 0.42,
-          2028: 0.50, 2030: 0.56, 2032: 0.62}
+  value: {2020: 0.25, 2022: 0.28, 2023: 0.29, 2025: 0.34, 2026: 0.47, 2027: 0.66,
+          2028: 0.72, 2030: 0.82, 2032: 0.90}
   unit: billions_usd_per_quarter
   source: DERIVED
   confidence: medium
   notes: >
     Also in dollars, for the same reason, though SG&A is a little more variable than R&D
     (it carries incentive comp, which does swing with profit). The 2026 step reflects
-    that.
+    that. FY26Q4 SG&A was $0.80bn on a 91-day basis, double FQ3, from the raised FY26
+    incentive comp and a $300m community investment; Micron says FY27 incentive comp is
+    higher again, so 2027 does not fall back to the FY26 run-rate.
 
 tax_rate:
-  value: {2020: 0.09, 2022: 0.10, 2023: 0.05, 2025: 0.12, 2026: 0.14,
+  value: {2020: 0.09, 2022: 0.10, 2023: 0.05, 2025: 0.12, 2026: 0.148, 2027: 0.155,
           2028: 0.16, 2030: 0.16, 2032: 0.16}
   unit: fraction_of_pretax_income
   source: DERIVED
@@ -37,22 +49,27 @@ tax_rate:
   notes: >
     Effective rate on pre-tax income. Micron's has historically been low -- Singapore and
     Taiwan manufacturing, plus US credits -- and drifts up toward the ~15% global minimum
-    (Pillar Two) as that phases in.
+    (Pillar Two) as that phases in. FY26 actual: 14.8% (13.7% -> 15.0% through the year).
+    FY27: "around 15.5%" (Micron, Sep 30 2026).
     In loss-making quarters the model does NOT apply this rate as a benefit: Micron
     carried valuation allowances through FY23 rather than booking the full shield. See
     model/pnl.py.
 
 other_income_usd_bn_per_quarter:
-  value: {2020: -0.03, 2023: -0.05, 2025: 0.0, 2026: 0.10, 2028: 0.15, 2032: 0.20}
+  value: {2020: -0.03, 2023: -0.05, 2025: 0.0, 2026: 0.40, 2027: 0.80, 2028: 1.00,
+          2030: 1.20, 2032: 1.40}
   unit: billions_usd_per_quarter
   source: DERIVED
   confidence: low
   notes: >
     Net interest and other, below EBIT. Turns positive as the FY26 cash pile builds and
     debt is retired. Small enough that it never changes a conclusion.
+    Nov 2026: FY26Q4 was +$0.49bn (interest income $575m on $73.5bn of cash and
+    investments, against $5.2bn of debt). Cash keeps building at the FCF rates projected
+    here even with buybacks, so this rises; 2026Q4 interpolates to ~$0.55bn.
 
 capex_intensity:
-  value: {2020: 0.34, 2022: 0.30, 2023: 0.46, 2025: 0.38, 2026: 0.22,
+  value: {2020: 0.34, 2022: 0.30, 2023: 0.46, 2025: 0.38, 2026: 0.23, 2027: 0.23,
           2028: 0.26, 2030: 0.28, 2032: 0.30}
   unit: fraction_of_revenue
   source: DERIVED
@@ -62,6 +79,10 @@ capex_intensity:
     FY26 revenue is exploding faster than any fab plan can spend -- which is why the 2026
     figure drops to 0.22 and then recovers. It is a reduced form, and it is the weakest
     part of the cash-flow layer.
+    Nov 2026: NOT USED for FY27 (2026Q4-2027Q3), where Micron's own capex plan applies
+    (guidance.capex_net_usd_bn_by_quarter). FY26 actual: 0.23 ($30.7bn gross on $133.2bn).
+    2027 stays at 0.23 and the ratio rises from FY28 as cleanroom construction for
+    late-CY28 capacity peaks.
 
     CROSS-CHECK, and this is what keeps it honest: capex must be roughly consistent with
     the wafer capacity upstream says Micron adds (385 -> 725 kwspm 2025->2032). If our
@@ -69,8 +90,8 @@ capex_intensity:
     what Micron is building. test_capex_is_consistent_with_upstream_wafer_adds checks it.
 
 dna_usd_bn_per_quarter:
-  value: {2020: 1.75, 2022: 1.85, 2023: 1.95, 2025: 2.10, 2026: 2.30,
-          2028: 3.10, 2030: 3.80, 2032: 4.40}
+  value: {2020: 1.75, 2022: 1.85, 2023: 1.95, 2025: 2.10, 2026: 2.45, 2027: 3.00,
+          2028: 3.90, 2030: 5.30, 2032: 6.50}
   unit: billions_usd_per_quarter
   source: DERIVED
   confidence: medium
@@ -80,3 +101,9 @@ dna_usd_bn_per_quarter:
     keeps rising through downturns. That stickiness is precisely why Micron's gross
     margin goes NEGATIVE in a trough rather than merely thin -- D&A does not care that
     prices collapsed.
+    Nov 2026: FY26 actual $9.5bn ($2.21bn -> $2.45bn/quarter, 91-day basis). Capex doubles
+    to ~$55bn in FY27 and rises again in FY28, mostly cleanroom construction that starts
+    depreciating when fabs come online (ID1 mid-CY27, Tongluo mid-CY27, ID2 and Japan late
+    CY28). FY27 ~$11.7bn and FY28 ~$15.6bn, consistent with the October 2026 projection
+    note's capex-schedule build. Still an exogenous series, not computed from capex: low
+    confidence past FY28.

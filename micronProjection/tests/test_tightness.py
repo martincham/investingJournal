@@ -118,12 +118,17 @@ def test_signal_responds_to_the_reference_not_to_absolutes(a):
     assert tightness.signal(loose, b).tightness < tightness.signal(a, b).tightness
 
 
-def test_all_three_scenarios_stay_tight_in_the_out_years(a):
+def test_scenarios_span_tight_to_glut_in_the_out_years(a):
     """Not a finding of ours -- a property of the input, recorded so it is not mistaken
-    for one. Upstream's bit lines imply a tight market through 2032 in every scenario.
-    Our earnings path inherits that, which is exactly what 'conditional on those bit
-    lines' means.
+    for one. In the July vintage every scenario stayed tight to 2032. In November's,
+    tight and central stay tight through 2030 while LOOSE turns into a glut from 2027
+    (upstream AGENTS.md: loose supply jumps above demand straight after the observed
+    data and nothing in that model cuts supply to end it). Our earnings path inherits
+    both, which is exactly what 'conditional on those bit lines' means.
     """
-    for name in ("tight", "central", "loose"):
-        sigs = {s.quarter: s for s in tightness.series(a, upstream.load_baseline(a, name))}
-        assert _annual(sigs, 2032, "tightness") > 0, f"{name}: 2032 reads loose"
+    sigs = {n: {s.quarter: s for s in tightness.series(a, upstream.load_baseline(a, n))}
+            for n in ("tight", "central", "loose")}
+    for name in ("tight", "central"):
+        for year in range(2027, 2031):
+            assert _annual(sigs[name], year, "tightness") > 0, f"{name}: {year} reads loose"
+    assert _annual(sigs["loose"], 2028, "tightness") < 0, "loose no longer gluts -- re-read upstream"

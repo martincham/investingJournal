@@ -11,42 +11,17 @@
 # eats ~3x the wafer. A single-curve model reads that as the learning rate collapsing.
 # It did not collapse; the mix changed.
 
-# ANCHORED ON THE LAST ACTUAL, not fitted to history. Cost through 2026Q2 is derived
-# from the filings ((COGS + inventory_build) / production_bits); the curve only has a job
-# after that. Anchoring it where reality stops means the projection starts from an
-# observed number rather than from the residual of a six-year regression.
-base_year:
-  value: 2026.375
-  unit: fractional_year
-  source: DERIVED
-  confidence: high
-  notes: >
-    Midpoint of 2026Q2 -- the last quarter with reported data, and the same boundary as
-    asp.pin_end and upstream's actuals_end. The curve compounds forward from here only.
-
-commodity_cash_cost_per_gb_base:
-  value: 1.32
-  unit: usd_per_gigabyte
-  source: DERIVED
-  confidence: high
-  notes: >
-    Micron's observed commodity-equivalent cash cost per GB in 2026Q2, computed from
-    reported figures alone: (COGS + inventory_build) / production_bits, length-normalised.
-    "Commodity-equivalent" means Micron's bits are weighted by COST ratios (HBM ~3.05x,
-    NAND ~0.013x), so this is not a spot commodity cost quote -- it is the unit the rest
-    of the model runs in.
-
-    CASH, i.e. EXCLUDING the D&A that sits inside reported COGS. The full cost per bit in
-    the same quarter is $1.94/GB; the $0.62 difference is depreciation. The P&L adds D&A
-    back as its own line, so feeding it a full cost here double-counts it -- which an
-    earlier cut did, quietly removing ~15pp from projected gross margin.
-
-    THIS VALUE IS DOWNSTREAM OF OTHER ASSUMPTIONS and has been re-derived twice: it read
-    0.54 while nand_cost_ratio was wrong by 16x, then 1.94 while D&A was still in it, and
-    1.32 once both were fixed. Nothing about Micron changed at any point -- the unit did.
-    If nand_cost_ratio or dna_in_cogs_share moves, RE-DERIVE this rather than nudging it,
-    or the projection starts from a cost the actuals never had and revenue steps at the
-    seam. test_modelled_cost_anchors_on_the_last_actual holds it to the derived series.
+# ANCHORED ON THE LAST KNOWN QUARTER, not fitted to history and not typed in here. Cost
+# through 2026Q3 is derived from the filings ((COGS + inventory_build) / production_bits).
+# The guided quarter's cost is backed out of Micron's GAAP gross-margin guide (model/pnl.py)
+# and the curve compounds forward from that. Until November 2026 the anchor was a constant
+# here (commodity_cash_cost_per_gb_base: 1.32 at 2026Q2), re-derived by hand three times as
+# other inputs moved; it is now computed, so it cannot go stale.
+#
+# For the record, the derived series around the seam (commodity-equivalent cash $/GB,
+# 91-day normalised): 2026Q2 1.36, 2026Q3 1.74 (FQ4'26: incentive comp absorbed into
+# inventory plus node end-of-life build-ahead), 2026Q4 guided 1.51 (central), falling
+# ~1.3%/quarter after on the learning curve.
 
 learning_rate_annual:
   value: {2018: 0.075, 2020: 0.07, 2023: 0.065, 2026: 0.06, 2029: 0.05, 2032: 0.045}

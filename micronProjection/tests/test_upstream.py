@@ -36,9 +36,9 @@ def test_all_three_scenarios_load(a):
         assert len(b.quarters) == 60, f"{name}: expected 2018Q1..2032Q4"
 
 
-def test_upstream_actuals_end_is_2026q2(central):
+def test_upstream_actuals_end_is_2026q3(central):
     """The ASP pin date and the EDGAR cutoff are both keyed to this."""
-    assert central.actuals_end == Quarter(2026, 2)
+    assert central.actuals_end == Quarter(2026, 3)
 
 
 def test_timeline_is_gapless_2018q1_to_2032q4(central):
@@ -81,16 +81,19 @@ def test_baseline_quarters_are_immutable(central):
         central.quarters[0].dram_supply_bits = 0.0  # type: ignore[misc]
 
 
-def test_hbm_is_never_capped_upstream(central):
+def test_hbm_is_not_capped_in_the_priced_window(central):
     """Our inelastic-core premise, re-checked against the file we loaded.
 
-    AGENTS.md says HBM runs in slight surplus in every quarter. contested_supply_bits
-    subtracts the inelastic core at FULL service on the strength of that. If upstream
-    ever starts capping HBM, the premise dies and the tightness signal needs rework --
-    so fail loudly here rather than silently mis-serve the core.
+    contested_supply_bits subtracts the inelastic core at FULL service, on the strength
+    of upstream's statement that HBM runs in surplus. The November 2026 vintage caps HBM
+    in 2032Q2-Q4 of central only (its test ceiling C5 binds; AGENTS.md says so). The
+    premise therefore holds through 2032Q1 and is known to fail in the last three
+    quarters of the horizon. Any cap EARLIER than that means the premise has died where
+    it matters and the tightness signal needs rework -- fail loudly.
     """
     capped = [b.quarter.label for b in central.quarters if b.hbm_is_capped]
-    assert not capped, f"HBM is capped in {capped}; contested_supply_bits assumes it never is"
+    early = [q for q in capped if Quarter.parse(q) < Quarter(2032, 2)]
+    assert not early, f"HBM is capped in {early}; contested_supply_bits assumes it is not"
 
 
 def test_contested_pool_segments_match_agents_md(a):
@@ -98,7 +101,7 @@ def test_contested_pool_segments_match_agents_md(a):
     contested = set(a.value("upstream.contested_segments"))
     inelastic = set(a.value("upstream.inelastic_segments"))
     assert contested == {"pc", "smartphone", "console", "graphics", "servers_traditional", "other"}
-    assert inelastic == {"hbm", "ai_server_host", "kv_offload", "auto_industrial_iot"}
+    assert inelastic == {"hbm", "ai_server_host", "kv_offload", "ai_cpu_server", "auto_industrial_iot"}
     assert not contested & inelastic
 
 
@@ -131,17 +134,20 @@ def test_gap_matches_supply_and_demand_as_given(central):
         assert b.gap == pytest.approx(b.dram_demand_bits / b.dram_supply_bits - 1.0, rel=1e-4), b.quarter
 
 
-def test_upstream_market_module_is_still_a_stub():
-    """We are the price layer. If upstream grows one, these two models start
-    disagreeing about ASP and somebody has to decide who wins -- loudly, not silently.
+def test_upstream_price_layer_is_read_as_given(a):
+    """Upstream grew its own price layer in the 2026-11 vintage (table `market`), which
+    is exactly the moment this test used to fail on: two models disagreeing about price,
+    with nobody deciding who wins. The decision (Nov 2026): upstream's industry price
+    PATH is an input, read verbatim through load_market; this model owns Micron's level,
+    the nominal conversion, cost and the P&L. The fitted response survives as a
+    cross-check only (asp.price_source).
     """
-    market = upstream.REPO_ROOT.parent / "memoryProjection" / "model" / "market.py"
-    if not market.exists():
-        pytest.skip("upstream not checked out alongside")
-    assert "NotImplementedError" in market.read_text(), (
-        "memoryProjection/model/market.py is no longer a stub -- upstream may now have "
-        "its own price layer. Reconcile before trusting this model's ASP."
-    )
+    m = upstream.load_market(a, "central")
+    assert m, "no market rows"
+    assert Quarter(2032, 4) in m
+    last_actual = max(q for q, x in m.items() if x.is_actual)
+    assert last_actual == Quarter(2026, 3), "market anchor must be upstream's actuals_end"
+    assert all(x.price_usd_per_gb > 0 for x in m.values())
 
 
 def test_micron_wafer_capacity_is_readable(a):

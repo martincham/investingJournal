@@ -250,6 +250,56 @@ def load_baseline(a: Assumptions, scenario: str = "central", *, strict_hash: boo
     )
 
 
+@dataclass(frozen=True)
+class MarketQuarter:
+    """One quarter of upstream's industry DRAM price layer (table `market`, Nov 2026).
+
+    REAL 2025 dollars per GB, industry-wide. Not Micron's price and not nominal: the
+    price model reads it as an INDEX (ratio to an anchor quarter) and converts it to
+    nominal itself. See model/asp.py.
+    """
+
+    quarter: Quarter
+    is_actual: bool
+    price_usd_per_gb: float
+    cost_usd_per_gb: float | None
+    gross_margin: float | None
+    budget_bound: bool
+
+
+def load_market(a: Assumptions, scenario: str = "central") -> dict[Quarter, MarketQuarter]:
+    """Upstream's industry DRAM price path for one scenario. Read-only, as given.
+
+    Raises if the table is absent: a vintage without a price layer cannot drive the
+    market price source, and silently falling back to the fitted response would change
+    what every projected number means.
+    """
+    with _connect(sqlite_path(a)) as conn:
+        tables = {r[0] for r in conn.execute("select name from sqlite_master where type='table'")}
+        if "market" not in tables:
+            raise UpstreamMismatch(
+                f"{sqlite_path(a).name} has no `market` table (upstream's price layer arrived "
+                f"in the 2026-11 vintage). Set asp.price_source: fitted, or point at a newer vintage."
+            )
+        rows = conn.execute(
+            "select quarter, is_actual, price_usd_per_gb, cost_usd_per_gb, gross_margin, "
+            "budget_bound from market where scenario = ?",
+            (scenario,),
+        ).fetchall()
+    return {
+        Quarter.parse(r["quarter"]): MarketQuarter(
+            quarter=Quarter.parse(r["quarter"]),
+            is_actual=bool(r["is_actual"]),
+            price_usd_per_gb=float(r["price_usd_per_gb"]),
+            cost_usd_per_gb=r["cost_usd_per_gb"],
+            gross_margin=r["gross_margin"],
+            budget_bound=bool(r["budget_bound"]),
+        )
+        for r in rows
+        if r["price_usd_per_gb"] is not None
+    }
+
+
 def load_all(a: Assumptions) -> dict[str, Baseline]:
     """All three upstream scenarios. These ARE our scenarios -- we add no fourth."""
     return {s: load_baseline(a, s) for s in a.value("upstream.expected_scenarios")}

@@ -50,7 +50,7 @@ def test_assumptions_load_through_the_shim():
     from model.conf import load
 
     a = load()
-    assert a.value("upstream.expected_actuals_end") == "2026Q2"
+    assert a.value("upstream.expected_actuals_end") == "2026Q3"
 
 
 def test_every_assumption_has_a_source_and_confidence():

@@ -181,11 +181,11 @@ def test_shipments_exceed_production_in_the_fy26_drain(a, base, rows):
     assert growth == pytest.approx(0.30, abs=0.08), f"modelled 9M FY26 bit growth {growth:.1%}"
 
 
-def test_shipments_are_pinned_to_actuals_through_2026q2(base, rows):
+def test_shipments_are_pinned_to_actuals_through_2026q3(base, rows):
     """Through upstream's actuals_end the bits rest on observed supply, so Micron's
     bits there are share-of-reality rather than share-of-forecast."""
     actual = [b for b in base.quarters if b.is_actual]
-    assert actual[-1].quarter == Quarter(2026, 2)
+    assert actual[-1].quarter == Quarter(2026, 3)
 
 
 def test_reconciliation_explains_the_19_vs_22_gap(a, base, rows):

@@ -1,8 +1,8 @@
 # Share count and shareholder returns. Drives the denominator of EPS.
 
 buyback_share_of_fcf:
-  value: {2020: 0.0, 2022: 0.30, 2023: 0.0, 2025: 0.05, 2026: 0.25,
-          2028: 0.45, 2030: 0.50, 2032: 0.50}
+  value: {2020: 0.0, 2022: 0.30, 2023: 0.0, 2025: 0.05, 2026: 0.0, 2027: 0.40,
+          2028: 0.60, 2030: 0.70, 2032: 0.70}
   unit: fraction_of_free_cash_flow
   source: DERIVED
   confidence: low
@@ -11,9 +11,25 @@ buyback_share_of_fcf:
     the trough, as it has in every trough; a model that keeps buying back through a
     downturn would shrink the share count exactly when the company is preserving cash,
     and would flatter trough EPS.
-    Rises through the boom as the balance sheet fills. Capped well below 1.0 because
-    Micron is a capital-hungry business that has never returned the majority of its cash
-    flow.
+    Rises through the boom as the balance sheet fills.
+    Nov 2026: FY26 actual was ~1% ($650m of repurchases against $59bn of FCF), because
+    Micron held capital return until 9 Dec 2026, two years after its CHIPS agreements.
+    It says it will increase capital return from that date and "over time return 100% of
+    our excess cash to shareholders". 2026 is therefore 0 (FQ1'27 ends 3 Dec, before the
+    date) and 2027-2028 ramp to 0.6-0.7 of FCF. Not 1.0: "excess" cash is after a cash
+    floor and the SCA deposits ($12.7bn) that must be returned to customers. Speculative.
+
+capex_incentives_usd_bn_per_quarter:
+  value: {2025: 0.50, 2026: 0.80, 2027: 0.60, 2028: 0.50, 2030: 0.30, 2032: 0.20}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: low
+  notes: >
+    Government incentives received against capex (CHIPS Act, Japan, Singapore). Used only
+    where capex comes from Micron's own NET plan (guidance.capex_net_usd_bn_by_quarter):
+    the model's capex line is GROSS, so these are added back.
+    FY26 actual: $3.3bn over the year, $0.33-0.73bn in the last two quarters (press
+    release, capex net reconciliation). Tapers as US fab subsidies are drawn down.
 
 dividend_usd_bn_per_quarter:
   value: {2020: 0.0, 2021: 0.11, 2023: 0.13, 2025: 0.13, 2026: 0.20,
