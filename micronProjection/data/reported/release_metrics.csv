@@ -1,0 +1,105 @@
+fiscal_label,calendar_quarter,metric,basis,value,value_low,value_high,unit,as_stated,source
+FY26Q4,2026Q3,gross_profit,non_gaap,47204,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,gross_margin,non_gaap,0.870,,,fraction,87.0%,FY26Q4/press-release
+FY26Q4,2026Q3,opex,non_gaap,2568,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,operating_income,non_gaap,44636,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,net_income,non_gaap,38398,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,diluted_shares,non_gaap,1149,,,shares_m,,FY26Q4/press-release
+FY26Q4,2026Q3,eps_diluted,non_gaap,33.42,,,usd,,FY26Q4/press-release
+FY26Q4,2026Q3,eps_diluted,gaap,32.87,,,usd,,FY26Q4/press-release
+FY26Q4,2026Q3,diluted_shares,gaap,1147,,,shares_m,,FY26Q4/press-release
+FY26Q4,2026Q3,patent_license_charge,gaap,500,,,usd_m,excluded from non-GAAP opex,FY26Q4/press-release
+FY26Q4,2026Q3,capex_net_of_incentives,non_gaap,10774,,,usd_m,investments in capital expenditures net,FY26Q4/press-release
+FY26Q4,2026Q3,adjusted_fcf,non_gaap,33199,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,effective_tax_rate,non_gaap,0.15,,,fraction,15%,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,dram_revenue,gaap,39800,,,usd_m,record $39.8 billion; 73% of revenue,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,nand_revenue,gaap,14100,,,usd_m,record $14.1 billion; 26% of revenue,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,dram_bits_qoq,gaap,,0.04,0.06,fraction,up mid-single-digit percentage range,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,dram_price_qoq,gaap,,0.16,0.19,fraction,increased high-teens percentage range,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,nand_bits_qoq,gaap,0.10,,,fraction,increased approximately 10%,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,nand_price_qoq,gaap,0.30,,,fraction,increased approximately 30%,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,data_center_ssd_revenue,gaap,10000,,,usd_m,nearly $10 billion; over two-thirds of NAND revenue,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,days_of_inventory,gaap,129,,,days,up 9 days QoQ (build-ahead + incentive comp absorbed),FY26Q4/prepared-remarks
+FY26Q4,2026Q3,sca_deposits_received,gaap,12300,,,usd_m,reported in financing cash flow; not in FCF,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,sca_deposits_balance,gaap,12700,,,usd_m,,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,sca_count,gaap,26,,,count,,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,sca_customer_commitments,gaap,32000,,,usd_m,mostly cash deposits,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,remaining_performance_obligations,gaap,150000,,,usd_m,approximately $150 billion; volumes x floor prices,FY26Q4/prepared-remarks
+FY26Q4,2026Q3,cash_and_investments,gaap,73480,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,total_debt,gaap,5179,,,usd_m,current 491 + long-term 4688,FY26Q4/press-release
+FY26Q4,2026Q3,net_cash,gaap,68300,,,usd_m,,FY26Q4/prepared-remarks
+FY26Q3,2026Q2,gross_profit,non_gaap,35199,,,usd_m,,FY26Q4/press-release
+FY26Q3,2026Q2,gross_margin,non_gaap,0.849,,,fraction,84.9%,FY26Q4/press-release
+FY26Q3,2026Q2,opex,non_gaap,1518,,,usd_m,,FY26Q4/press-release
+FY26Q3,2026Q2,operating_income,non_gaap,33681,,,usd_m,,FY26Q4/press-release
+FY26Q3,2026Q2,net_income,non_gaap,28857,,,usd_m,,FY26Q4/press-release
+FY26Q3,2026Q2,diluted_shares,non_gaap,1149,,,shares_m,,FY26Q4/press-release
+FY26Q3,2026Q2,eps_diluted,non_gaap,25.11,,,usd,,FY26Q4/press-release
+FY26Q3,2026Q2,capex_net_of_incentives,non_gaap,7084,,,usd_m,,FY26Q4/press-release
+FY26Q3,2026Q2,adjusted_fcf,non_gaap,18304,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,gross_margin,non_gaap,0.457,,,fraction,45.7%,FY26Q4/press-release
+FY25Q4,2025Q3,opex,non_gaap,1214,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,net_income,non_gaap,3469,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,eps_diluted,non_gaap,3.03,,,usd,,FY26Q4/press-release
+FY25Q4,2025Q3,capex_net_of_incentives,non_gaap,4927,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,adjusted_fcf,non_gaap,803,,,usd_m,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_cmbu_revenue,gaap,16283,,,usd_m,Cloud Memory,FY26Q4/press-release
+FY26Q4,2026Q3,bu_cmbu_gross_margin,gaap,0.83,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_cmbu_operating_margin,gaap,0.76,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_cdbu_revenue,gaap,18002,,,usd_m,Core Data Center,FY26Q4/press-release
+FY26Q4,2026Q3,bu_cdbu_gross_margin,gaap,0.90,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_cdbu_operating_margin,gaap,0.85,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_mcbu_revenue,gaap,13114,,,usd_m,Mobile and Client,FY26Q4/press-release
+FY26Q4,2026Q3,bu_mcbu_gross_margin,gaap,0.90,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_mcbu_operating_margin,gaap,0.88,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_aebu_revenue,gaap,6824,,,usd_m,Automotive and Embedded,FY26Q4/press-release
+FY26Q4,2026Q3,bu_aebu_gross_margin,gaap,0.84,,,fraction,,FY26Q4/press-release
+FY26Q4,2026Q3,bu_aebu_operating_margin,gaap,0.79,,,fraction,,FY26Q4/press-release
+FY26Q3,2026Q2,bu_cmbu_revenue,gaap,13769,,,usd_m,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_cmbu_gross_margin,gaap,0.83,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_cmbu_operating_margin,gaap,0.78,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_cdbu_revenue,gaap,11524,,,usd_m,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_cdbu_gross_margin,gaap,0.87,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_cdbu_operating_margin,gaap,0.83,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_mcbu_revenue,gaap,11521,,,usd_m,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_mcbu_gross_margin,gaap,0.87,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_mcbu_operating_margin,gaap,0.86,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_aebu_revenue,gaap,4634,,,usd_m,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_aebu_gross_margin,gaap,0.79,,,fraction,,FY26Q3/press-release
+FY26Q3,2026Q2,bu_aebu_operating_margin,gaap,0.75,,,fraction,,FY26Q3/press-release
+FY26Q2,2026Q1,bu_cmbu_revenue,gaap,7749,,,usd_m,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_cmbu_gross_margin,gaap,0.74,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_cmbu_operating_margin,gaap,0.66,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_cdbu_revenue,gaap,5687,,,usd_m,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_cdbu_gross_margin,gaap,0.74,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_cdbu_operating_margin,gaap,0.67,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_mcbu_revenue,gaap,7711,,,usd_m,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_mcbu_gross_margin,gaap,0.79,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_mcbu_operating_margin,gaap,0.76,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_aebu_revenue,gaap,2708,,,usd_m,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_aebu_gross_margin,gaap,0.68,,,fraction,,FY26Q2/press-release
+FY26Q2,2026Q1,bu_aebu_operating_margin,gaap,0.62,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_cmbu_revenue,gaap,5284,,,usd_m,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_cmbu_gross_margin,gaap,0.66,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_cmbu_operating_margin,gaap,0.55,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_cdbu_revenue,gaap,2379,,,usd_m,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_cdbu_gross_margin,gaap,0.51,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_cdbu_operating_margin,gaap,0.37,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_mcbu_revenue,gaap,4255,,,usd_m,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_mcbu_gross_margin,gaap,0.54,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_mcbu_operating_margin,gaap,0.47,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_aebu_revenue,gaap,1720,,,usd_m,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_aebu_gross_margin,gaap,0.45,,,fraction,,FY26Q2/press-release
+FY26Q1,2025Q4,bu_aebu_operating_margin,gaap,0.36,,,fraction,,FY26Q2/press-release
+FY25Q4,2025Q3,bu_cmbu_revenue,gaap,4543,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,bu_cdbu_revenue,gaap,1577,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,bu_mcbu_revenue,gaap,3760,,,usd_m,,FY26Q4/press-release
+FY25Q4,2025Q3,bu_aebu_revenue,gaap,1434,,,usd_m,,FY26Q4/press-release
+FY25Q3,2025Q2,bu_cmbu_revenue,gaap,3386,,,usd_m,,FY26Q3/press-release
+FY25Q3,2025Q2,bu_cdbu_revenue,gaap,1530,,,usd_m,,FY26Q3/press-release
+FY25Q3,2025Q2,bu_mcbu_revenue,gaap,3255,,,usd_m,,FY26Q3/press-release
+FY25Q3,2025Q2,bu_aebu_revenue,gaap,1127,,,usd_m,,FY26Q3/press-release
+FY25Q2,2025Q1,bu_cmbu_revenue,gaap,2947,,,usd_m,,FY26Q2/press-release
+FY25Q2,2025Q1,bu_cdbu_revenue,gaap,1830,,,usd_m,,FY26Q2/press-release
+FY25Q2,2025Q1,bu_mcbu_revenue,gaap,2236,,,usd_m,,FY26Q2/press-release
+FY25Q2,2025Q1,bu_aebu_revenue,gaap,1034,,,usd_m,,FY26Q2/press-release

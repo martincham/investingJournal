@@ -1,0 +1,33 @@
+period,metric,basis,low,mid,high,unit,as_stated,issued,actual,source
+FY26Q3,revenue,non_gaap,32750,33500,34250,usd_m,$33.5 billion ± $750 million,2026-03-18,41456,FY26Q2/press-release
+FY26Q3,gross_margin,non_gaap,,0.81,,fraction,approximately 81%,2026-03-18,0.849,FY26Q2/press-release
+FY26Q3,opex,non_gaap,,1400,,usd_m,approximately $1.40 billion,2026-03-18,1518,FY26Q2/press-release
+FY26Q3,eps_diluted,non_gaap,18.75,19.15,19.55,usd,$19.15 ± $0.40,2026-03-18,25.11,FY26Q2/press-release
+FY26Q4,revenue,non_gaap,49000,50000,51000,usd_m,$50.0 billion ± $1.0 billion,2026-06-24,54229,FY26Q3/press-release
+FY26Q4,gross_margin,non_gaap,,0.86,,fraction,approximately 86%,2026-06-24,0.870,FY26Q3/press-release
+FY26Q4,opex,non_gaap,,1650,,usd_m,approximately $1.65 billion,2026-06-24,2568,FY26Q3/press-release
+FY26Q4,eps_diluted,non_gaap,30.00,31.00,32.00,usd,$31.00 ± $1.00,2026-06-24,33.42,FY26Q3/press-release
+FY27Q1,revenue,non_gaap,60000,61500,63000,usd_m,$61.5 billion ± $1.5 billion,2026-09-30,,FY26Q4/press-release
+FY27Q1,gross_margin,non_gaap,,0.8625,,fraction,approximately 86.25%; stated as the FY27 gross-margin floor,2026-09-30,,FY26Q4/press-release
+FY27Q1,gross_margin,gaap,,0.8595,,fraction,approximately 85.95%,2026-09-30,,FY26Q4/press-release
+FY27Q1,opex,non_gaap,,2060,,usd_m,approximately $2.06 billion,2026-09-30,,FY26Q4/press-release
+FY27Q1,eps_diluted,non_gaap,37.15,38.15,39.15,usd,$38.15 ± $1.00,2026-09-30,,FY26Q4/press-release
+FY27Q1,eps_diluted,gaap,36.84,37.84,38.84,usd,$37.84 ± $1.00,2026-09-30,,FY26Q4/press-release
+FY27Q1,diluted_shares,non_gaap,,1150,,shares_m,approximately 1.15 billion,2026-09-30,,FY26Q4/prepared-remarks
+FY27Q1,tax_rate,non_gaap,,0.155,,fraction,around 15.5%,2026-09-30,,FY26Q4/prepared-remarks
+FY27Q1,capex_net_of_incentives,non_gaap,,11500,,usd_m,around $11.5 billion,2026-09-30,,FY26Q4/prepared-remarks
+FY27H1,capex_net_of_incentives,non_gaap,,25000,,usd_m,approximately $25 billion; H2 higher,2026-09-30,,FY26Q4/prepared-remarks
+FY27,opex_increase_yoy,non_gaap,,2500,,usd_m,increase by approximately $2.5 billion,2026-09-30,,FY26Q4/prepared-remarks
+FY27,tax_rate,non_gaap,,0.155,,fraction,around 15.5%,2026-09-30,,FY26Q4/prepared-remarks
+FY27,revenue_path,non_gaap,,,,text,sequential revenue growth each quarter,2026-09-30,,FY26Q4/prepared-remarks
+FY27,gross_margin_path,non_gaap,,,,text,higher beyond FQ1 with a more moderate rate of price increases,2026-09-30,,FY26Q4/prepared-remarks
+CY2026,industry_dram_bit_growth,industry,0.23,0.25,0.27,fraction,mid-20s percentage range,2026-09-30,,FY26Q4/prepared-remarks
+CY2026,micron_dram_bit_growth,company,,,,text,approximately in line with industry,2026-09-30,,FY26Q4/prepared-remarks
+CY2026,industry_nand_bit_growth,industry,0.20,0.22,0.24,fraction,low-20s percentage range (slightly above prior),2026-09-30,,FY26Q4/prepared-remarks
+CY2026,micron_nand_bit_growth,company,,,,text,less than industry,2026-09-30,,FY26Q4/prepared-remarks
+CY2027,industry_dram_bit_growth,industry,0.20,0.22,0.24,fraction,low-20s percentage range; supply constrained,2026-09-30,,FY26Q4/prepared-remarks
+CY2028,industry_dram_bit_growth,industry,0.20,0.22,0.24,fraction,low-20s percentage range; supply constrained,2026-09-30,,FY26Q4/prepared-remarks
+CY2027,industry_nand_bit_growth,industry,0.23,0.25,0.27,fraction,mid-20s percentage range; supply constrained,2026-09-30,,FY26Q4/prepared-remarks
+CY2028,industry_nand_bit_growth,industry,0.23,0.25,0.27,fraction,mid-20s percentage range; supply constrained,2026-09-30,,FY26Q4/prepared-remarks
+CY2026,server_unit_growth,industry,0.16,0.18,0.19,fraction,high-teens percentage range,2026-09-30,,FY26Q4/prepared-remarks
+CY2027,server_unit_growth,industry,0.16,0.18,0.19,fraction,high-teens percentage range,2026-09-30,,FY26Q4/prepared-remarks

@@ -5,3 +5,4 @@ data/edgar/*.json
 
 # Secrets
 .env
+data/filings/
