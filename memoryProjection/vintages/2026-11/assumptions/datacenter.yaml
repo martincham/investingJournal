@@ -1,0 +1,93 @@
+# The AI datacentre pipeline: announced capacity, and what actually gets built.
+#
+# Replaces the exogenous "new_ai_datacenter_gw_per_year" guess with an explicit
+# announced-pipeline-minus-attrition model, because the announced number and the
+# delivered number are wildly different and the gap between them is one of the biggest
+# swing factors in AI memory demand.
+#
+# Power matters here for a specific reason: it is the ration card. Every accelerator
+# needs a watt, and once the grid is the constraint, an old GPU occupying a watt is not
+# just idle capital -- it is *blocking* a new GPU that could use that same watt far more
+# productively. That is what drives the retirement model in gpu_fleet.yaml.
+
+announced_gw_per_year:
+  value: {2018: 0.4, 2019: 0.6, 2020: 0.9, 2021: 1.4, 2022: 2.5, 2023: 4.3, 2024: 9.4,
+          2025: 20, 2026: 32, 2027: 46, 2028: 59, 2029: 71, 2030: 81,
+          2031: 90, 2032: 99}
+  unit: gigawatts_announced_per_year
+  source: DERIVED
+  confidence: low
+  notes: >
+    GROSS announced/slated new AI datacentre capacity with a stated in-service year:
+    Stargate (~10GW headline), Meta Hyperion + Prometheus, xAI Colossus, Microsoft
+    Fairwater, AWS, Google, Anthropic/Fluidstack, plus sovereign programmes.
+    This is the press-release number. It is NOT what gets built.
+    The pre-2024 anchors matter more than they look: without them the series
+    extrapolates flat backwards and conjures ~80GW of datacentres that never existed,
+    which then populates the 2018-2023 fleet with tens of millions of phantom GPUs.
+    A cumulative stock model is unforgiving about its own history.
+
+# ---------------------------------------------------------------------------
+# Attrition. The reason announced != delivered.
+# ---------------------------------------------------------------------------
+# Announced datacentres fail for boring, repeatable reasons: no grid interconnect
+# (queues run 4-7 years in PJM/ERCOT), no transformers or turbines (multi-year lead
+# times), local opposition, water, financing, or the anchor tenant simply walking away.
+# The further from a shovel a project is, the more of it evaporates.
+realisation_rate:
+  value: {2018: 0.90, 2022: 0.88, 2024: 0.85, 2025: 0.80, 2026: 0.62, 2027: 0.52,
+          2028: 0.47, 2029: 0.45, 2030: 0.44, 2031: 0.43, 2032: 0.42}
+  unit: fraction_of_announced_delivered_on_time
+  source: DERIVED
+  confidence: speculative
+  notes: >
+    Fraction of the announced cohort that actually energises in its stated year.
+    Falls with distance because near-term projects are already under construction
+    (little left to cancel) while out-year projects are still slideware.
+    Calibrated so that DELIVERED capacity lands at ~25GW in 2026 and ~46GW in 2029 --
+    consistent with what the grid and the turbine/transformer supply chain can
+    physically absorb, and with the model's earlier independently-set power series.
+    THE MOST SPECULATIVE NUMBER IN THE MODEL, and one of the most important: it is the
+    difference between the AI buildout the industry announces and the one it delivers.
+    Exposed as a slider.
+
+slip_quarters:
+  value: 3
+  unit: quarters
+  source: DERIVED
+  confidence: low
+  notes: >
+    Median delay for projects that DO get built. Applied as an S-curve energisation
+    ramp rather than a step: a datacentre does not switch on, it energises hall by hall.
+
+cancellation_asymmetry:
+  value: 0.15
+  unit: fraction
+  source: DERIVED
+  confidence: speculative
+  notes: >
+    Slipped capacity is not lost -- it arrives late. This is the share that is
+    genuinely CANCELLED (never built at all) rather than merely delayed, so it never
+    reappears in a later year. The rest of the shortfall rolls forward.
+
+facility_overhead:
+  value: 1.55
+  unit: ratio
+  source: DERIVED
+  confidence: low
+  notes: >
+    Multiplier from ACCELERATOR chip power to FACILITY power: cooling (PUE), networking,
+    storage, and the CPU host that sits beside every accelerator. The datacentre GW
+    figures are facility-level; the fleet's kW-per-unit figures are chip-level. Mixing
+    the two silently overstates how many GPUs a gigawatt can hold by ~55%.
+
+grid_interconnect_gw_ceiling:
+  value: {2026: 35, 2027: 45, 2028: 55, 2029: 62, 2030: 70, 2031: 75, 2032: 80}
+  unit: gigawatts_per_year
+  source: DERIVED
+  confidence: low
+  notes: >
+    A hard ceiling on new energisation regardless of how much gets announced or funded:
+    interconnect queues, transformer and turbine output, and transmission. Behind-the-
+    meter gas and on-site generation are what let 2026-27 exceed the utility queue,
+    which is why this sits above the delivered figure rather than binding it hard.
