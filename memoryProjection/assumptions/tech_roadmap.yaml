@@ -15,9 +15,22 @@
 # DRAM planar scaling is close to dead. That is why supply growth now depends on
 # pouring concrete rather than on shrinking, and concrete takes 3-4 years.
 dram_gb_per_wafer:
-  value: {2018: 1040, 2019: 1170, 2020: 1315, 2021: 1450, 2022: 1585, 2023: 1710,
-          2024: 1915, 2025: 2140, 2026: 2260, 2027: 2385, 2028: 2510, 2029: 2625,
-          2030: 2755, 2031: 2935, 2032: 3135}
+  value:
+    2018: 1040
+    2019: 1170
+    2020: 1315
+    2021: 1450
+    2022: 1585
+    2023: 1710
+    2024: 1915
+    2025: 2140
+    2026: 2260
+    2027: 2620
+    2028: 2910
+    2029: 3170
+    2030: 3425
+    2031: 3700
+    2032: 3960
   unit: gigabytes_per_300mm_wafer
   source: DERIVED
   confidence: medium
@@ -29,6 +42,15 @@ dram_gb_per_wafer:
     below that because of DDR4, GDDR, and CXMT's legacy nodes. Independently, $122B
     of 2025 DRAM revenue at a ~$2.9/GB blended ASP implies ~42 EB. Two methods, same
     answer, so the base year is probably right to within ~15%.
+    Nov 2026: 2027+ raised (2027 2385 -> 2620, +16%; then +11%, +9%, +8%, +8%, +7%). The
+    July path slowed to ~5%/yr against ~11%/yr in 2018-25, with 1c ramping in 2026-27 (SK
+    hynix 1c ~35% of output by 1Q27), 1d in 2027-28 and Samsung 4F2 from 2028. Calibrated
+    against three independent statements that only fit together at ~+16% density in 2027:
+    Micron, industry DRAM bit shipments low-20s % in CY27 and CY28 (FQ4-26 prepared remarks,
+    2026-09-30); the SK hynix CEO, 2027 wafers +12% with ex-HBM bits +15% (2026-07-21); and
+    supplier HBM volumes summing to ~7 EB in 2027. With the HBM wafer share rising 0.261 ->
+    0.339, July's +5.5% gave total bits +14% and ex-HBM bits ~flat. TrendForce: 2026-27 bit
+    growth comes mainly from node migration.
 
 # S22 + S23. THE key variable.
 #
@@ -43,8 +65,18 @@ dram_gb_per_wafer:
 # A separate source independently states one HBM wafer displaces ~three conventional
 # DRAM wafers. Those agree, which is a good sign.
 hbm_trade_ratio:
-  value: {2022: 2.3, 2023: 2.4, 2024: 2.6, 2025: 2.85, 2026: 2.85, 2027: 3.05,
-          2028: 3.15, 2029: 3.2, 2030: 3.25, 2031: 3.3, 2032: 3.3}
+  value:
+    2022: 2.3
+    2023: 2.4
+    2024: 2.6
+    2025: 2.85
+    2026: 2.85
+    2027: 2.9
+    2028: 3.0
+    2029: 3.05
+    2030: 3.1
+    2031: 3.15
+    2032: 3.15
   unit: wafer_capacity_per_bit_vs_commodity
   source: https://tech-insider.org/memory-chip-shortage-2026-ai-consumer-electronics/
   confidence: medium
@@ -53,6 +85,11 @@ hbm_trade_ratio:
     wafer terms than HBM3E: taller stacks compound known-good-die losses and the base
     die adds area. If this ratio keeps climbing, the squeeze is self-reinforcing --
     every incremental unit of AI demand destroys more commodity supply than the last.
+    Nov 2026: 2027 3.05 -> 2.9 and the later path flattened. TrendForce's own shares (HBM
+    ~30% of top-3 wafers and ~13% of bits in 2027) solve to ~2.87
+    (https://www.trendforce.com/presscenter/news/20260602-13074.html). 8-Hi stacks in 2027
+    improve stack yield; hybrid bonding slipped to HBM4E/HBM5, so the rise comes later and
+    smaller. See investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F1.8.
 
 # Share of DRAM wafer starts allocated to HBM. A producer ALLOCATION decision, not a
 # physical constraint: HBM has been the most profitable use of a wafer, so the big
@@ -79,6 +116,11 @@ hbm_wafer_share:
     the stated trajectory implies, and it is startling enough to be worth a slider.
     The compounding cruelty: at a 2.85x trade ratio, a 26% wafer allocation costs
     roughly HALF the commodity bits those wafers would otherwise have made.
+    Nov 2026: unchanged. TrendForce gives 22%/30% of top-3 wafer input for 2026/2027 and
+    Samsung 'nearly 30% of industry capacity' in 2027; the denominator is ambiguous, giving
+    a 2027 range of 0.30-0.37 that contains 0.339. CXMT is reported to start HBM3 in 2027
+    (low confidence); not added. See
+    investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F1.7, F1.14.
 
 # CXMT and other Chinese DRAM run older nodes without EUV, so they get fewer bits per
 # wafer than the leading edge. Their wafers are discounted accordingly.

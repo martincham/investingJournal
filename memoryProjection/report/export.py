@@ -61,6 +61,8 @@ CREATE TABLE balance (
     addressable_gap REAL NOT NULL,        -- ex-captive-China merchant scope
     deficit_eb REAL NOT NULL,             -- demand - supply, scope-invariant
     captive_eb REAL NOT NULL,             -- Chinese bits absorbed domestically
+    demand_at_price_eb REAL,              -- Nov 2026: demand if real prices stay at 2026Q3
+    gap_at_price REAL,                    -- demand_at_price/supply - 1 (global scope)
     PRIMARY KEY (scenario, quarter, product)
 );
 
@@ -89,6 +91,15 @@ CREATE TABLE demand_segment (
     product  TEXT NOT NULL,               -- 'dram' | 'nand'
     segment  TEXT NOT NULL,               -- hbm, ai_server_host, pc, inventory, ...
     demand_eb REAL NOT NULL,              -- per quarter; inventory can be negative
+    PRIMARY KEY (scenario, quarter, product, segment)
+);
+
+CREATE TABLE demand_segment_at_price (     -- Nov 2026: same layout, at-current-prices line
+    scenario TEXT NOT NULL,
+    quarter  TEXT NOT NULL,
+    product  TEXT NOT NULL,
+    segment  TEXT NOT NULL,
+    demand_eb REAL NOT NULL,
     PRIMARY KEY (scenario, quarter, product, segment)
 );
 
@@ -157,6 +168,8 @@ CREATE TABLE annual_summary (
     dram_addressable_gap REAL, hbm_supply_eb REAL,
     nand_supply_eb REAL, nand_demand_eb REAL, nand_gap REAL,
     binding TEXT, hbm_binding TEXT,
+    dram_demand_at_price_eb REAL, dram_gap_at_price REAL,
+    nand_demand_at_price_eb REAL, nand_gap_at_price REAL,
     PRIMARY KEY (scenario, year)
 );
 
@@ -209,15 +222,17 @@ def export(db_path: Path = DB) -> Path:
     for name, run in runs.items():
         # balance -- one row per quarter per product
         rows = []
-        for q, s, dbal, nbal in zip(run.quarters, run.supply, run.dram, run.nand):
-            for product, b in (("dram", dbal), ("nand", nbal)):
+        for q, s, d, dbal, nbal in zip(run.quarters, run.supply, run.demand, run.dram, run.nand):
+            for product, b, at_bits in (("dram", dbal, d.at_price.dram_total_bits),
+                                        ("nand", nbal, d.at_price.nand_total_bits)):
                 rows.append((
                     name, q.label, q.year, q.q, product, int(s.is_actual),
                     b.global_supply_eb, b.global_demand_eb,
                     b.global_gap, b.addressable_gap,
                     b.deficit_eb, units.bits_to_eb(b.captive_bits),
+                    units.bits_to_eb(at_bits), at_bits / b.global_supply_bits - 1.0,
                 ))
-        con.executemany(f"INSERT INTO balance VALUES ({','.join('?' * 12)})", rows)
+        con.executemany(f"INSERT INTO balance VALUES ({','.join('?' * 14)})", rows)
 
         con.executemany(
             f"INSERT INTO supply_detail VALUES ({','.join('?' * 15)})",
@@ -238,6 +253,15 @@ def export(db_path: Path = DB) -> Path:
                     seg_rows.append((name, d.quarter.label, product, seg,
                                      units.bits_to_eb(bits)))
         con.executemany("INSERT INTO demand_segment VALUES (?,?,?,?,?)", seg_rows)
+
+        at_rows = []
+        for d in run.demand:
+            p = d.at_price
+            for product, segs in (("dram", p.dram_by_segment), ("nand", p.nand_by_segment)):
+                for seg, bits in segs.items():
+                    at_rows.append((name, d.quarter.label, product, seg,
+                                    units.bits_to_eb(bits)))
+        con.executemany("INSERT INTO demand_segment_at_price VALUES (?,?,?,?,?)", at_rows)
 
         con.executemany(
             f"INSERT INTO fleet VALUES ({','.join('?' * 13)})",
@@ -274,11 +298,13 @@ def export(db_path: Path = DB) -> Path:
         con.executemany("INSERT INTO capex_crosscheck VALUES (?,?,?,?,?,?)", cx_rows)
 
         con.executemany(
-            f"INSERT INTO annual_summary VALUES ({','.join('?' * 12)})",
+            f"INSERT INTO annual_summary VALUES ({','.join('?' * 16)})",
             [(name, y, *(run.annual(y)[k] for k in (
                 "dram_supply_eb", "dram_demand_eb", "dram_gap", "dram_addressable_gap",
                 "hbm_supply_eb", "nand_supply_eb", "nand_demand_eb", "nand_gap",
-                "binding", "hbm_binding")))
+                "binding", "hbm_binding",
+                "dram_demand_at_price_eb", "dram_gap_at_price",
+                "nand_demand_at_price_eb", "nand_gap_at_price")))
              for y in range(tl[0].year, tl[-1].year + 1)],
         )
 

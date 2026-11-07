@@ -11,8 +11,17 @@
 
 dram_wafer_capacity_kwspm:
   samsung:
-    value: {2018: 430, 2020: 470, 2022: 550, 2024: 640, 2025: 720, 2026: 780,
-            2027: 840, 2028: 900, 2030: 1000, 2032: 1080}
+    value:
+      2018: 430
+      2020: 470
+      2022: 550
+      2024: 640
+      2025: 720
+      2026: 780
+      2027: 840
+      2028: 900
+      2030: 1050
+      2032: 1150
     unit: kwspm
     source: https://semiconductorx.com/fabs-dram.php
     confidence: medium
@@ -21,10 +30,25 @@ dram_wafer_capacity_kwspm:
       shift P-line capacity between foundry and DRAM (S4), which makes these the
       widest error bars of the big three -- the out-years are the model's assumption,
       not Samsung's guidance.
+      Nov 2026: out-years raised (2030 1000->1050, 2032 1080->1150). P5 Fab 1 starts Jul
+      2027 and P5 reaches 600k wpm of 300mm at full operation in 2029, not all DRAM.
+      Near-term levels left: they are calibrated to output, and Samsung itself says 2027-28
+      bit adds are limited. DRAM WFE roughly doubles 2026-28 (Goldman $48bn -> $97bn), which
+      is the supply response the July path under-represented. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F4.1-F4.2.
 
   sk_hynix:
-    value: {2018: 340, 2020: 380, 2022: 420, 2024: 500, 2025: 595, 2026: 620,
-            2027: 670, 2028: 720, 2030: 820, 2032: 900}
+    value:
+      2018: 340
+      2020: 380
+      2022: 420
+      2024: 500
+      2025: 595
+      2026: 620
+      2027: 670
+      2028: 740
+      2030: 920
+      2032: 1000
     unit: kwspm
     source: https://x.com/Jukanlosreve/status/1973531213295190294
     confidence: medium
@@ -32,10 +56,24 @@ dram_wafer_capacity_kwspm:
       SK Hynix guided DRAM wafer input to the 600k/month range in 2H2026 (~620).
       M15X Cheongju is the near-term add; the Yongin cluster's first fab is the
       2027-28 step. Highest HBM mix of any producer.
+      Nov 2026: out-years raised (2028 720->740, 2030 820->920, 2032 900->1000). SK hynix
+      targets ~1M wpm by 2030-31 with Yongin Fab 1 tool-in from Feb 2027 (TrendForce/The
+      Elec 2026-06-05); 920 haircuts the target. DRAM WFE roughly doubles 2026-28 (Goldman
+      $48bn -> $97bn), which is the supply response the July path under-represented. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F4.1-F4.2.
 
   micron:
-    value: {2018: 300, 2020: 330, 2022: 350, 2024: 365, 2025: 385, 2026: 420,
-            2027: 470, 2028: 520, 2030: 640, 2032: 720}
+    value:
+      2018: 300
+      2020: 330
+      2022: 350
+      2024: 365
+      2025: 385
+      2026: 420
+      2027: 470
+      2028: 520
+      2030: 680
+      2032: 800
     unit: kwspm
     source: https://www.trendforce.com/presscenter/news/20251113-12780.html
     confidence: medium
@@ -45,6 +83,11 @@ dram_wafer_capacity_kwspm:
       ID1 then ID2, plus Hiroshima). Clay NY is 2030+. This lag is exactly the
       "new fab capacity late-27/28" point in the thesis, and it is why the supply
       line cannot bend before then no matter what capex does.
+      Nov 2026: out-years raised (2030 640->680, 2032 720->800). FY27 capex ~$55bn, double
+      FY26, mostly cleanrooms online from late CY28 (Micron FQ4-26 prepared remarks,
+      2026-09-30). DRAM WFE roughly doubles 2026-28 (Goldman $48bn -> $97bn), which is the
+      supply response the July path under-represented. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F4.1-F4.2.
 
   cxmt:
     value: {2018: 0, 2020: 40, 2022: 100, 2024: 200, 2025: 265, 2026: 350,
@@ -95,12 +138,26 @@ nand_wafer_capacity_kwspm:
     source: https://www.isaiahresearch.com/Insight/Detail/105
     confidence: low
   ymtc:
-    value: {2018: 20, 2020: 60, 2022: 100, 2024: 115, 2025: 130, 2026: 155,
-            2028: 200, 2030: 240, 2032: 270}
+    value:
+      2018: 20
+      2020: 60
+      2022: 100
+      2024: 115
+      2025: 130
+      2026: 200
+      2027: 250
+      2028: 300
+      2030: 400
+      2032: 450
     unit: kwspm
     source: https://www.isaiahresearch.com/Insight/Detail/105
     confidence: low
-    notes: Also treated as captive-China per china.yaml.
+    notes: >
+      Also treated as captive-China per china.yaml.
+      Nov 2026: raised. YMTC already runs ~200k wpm across two fabs (Reuters, Apr 2026) with
+      ~13-14% of NAND bits, and Fab 3 reaches ~50k by 2027. Captive to China, so the global
+      gap is invariant; NAND levels and the split move. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F1.15.
 
 utilisation:
   dram:

@@ -1,0 +1,111 @@
+# DEMAND AT CURRENT PRICES. The second demand line (Nov 2026).
+#
+# The main demand line is UNRATIONED: what buyers would take at 2025 prices. This file
+# builds a second line: what buyers take if real memory prices stay where they were in
+# 2026Q3 (memory makers at ~80-87% gross margins). It is the rationed line.
+#
+# How to read the two together:
+#   unrationed demand - supply   = how far price and rationing have had to work (the gap)
+#   at-price demand   - supply   = whether today's prices are high enough to clear the
+#                                  market going forward. Positive: prices still have to
+#                                  rise. Negative: today's prices would leave bits unsold,
+#                                  so prices fall.
+# In quarters with observed data the at-price line should sit close to supply, because
+# what is demanded at the clearing price is what ships. tests/test_at_price.py checks
+# that; it is the check that these inputs are realistic.
+#
+# Every series carries the same 2025 anchor as its unrationed counterpart, so the two
+# lines interpolate from the same starting point.
+#
+# Mechanics. Every key below mirrors an input path elsewhere in assumptions/ (e.g.
+# demand_at_price.demand_ai.hbm_gb_per_accelerator replaces
+# demand_ai.hbm_gb_per_accelerator). It applies from actuals.rationing_start; before
+# that quarter the two lines are identical. Any input NOT listed here is taken as
+# unaffected by price at today's levels: accelerator and server unit counts, the
+# ai_cpu_server segment, auto/industrial, graphics, console, KV offload, inventory.
+# Unit counts for PCs and phones are pinned to observed shipments on this line in every
+# observed quarter, because those shipments ARE the rationed outcome.
+
+demand_ai:
+  hbm_gb_per_accelerator:
+    value: {2025: 240, 2026: 270, 2027: 300, 2028: 330, 2029: 380, 2030: 440, 2031: 500, 2032: 570}
+    unit: gb_per_unit
+    source: https://www.trendforce.com/presscenter/news/20260804-13166.html
+    confidence: low
+    notes: >
+      Shipped content, not planned content. 2026: mostly 288GB parts (GB300, Rubin) with
+      cheaper ASICs (Trainium3 144GB, Maia 216GB) pulling the blend below the unrationed
+      280. 2027: CSPs evaluating 8-Hi HBM for their ASICs to get "more GPUs from the same
+      HBM bit output" (TrendForce 2026-08-04, 2026-09-29); realised blend ~290-330.
+      2028: Rubin Ultra tested at 192GB, 12-Hi HBM4 and 8-Hi HBM4E instead of the ~384GB
+      dual-die spec (TrendForce 2026-08-04; SemiAnalysis). Later years keep the cut ratio
+      (~0.75-0.8 of unrationed).
+
+  conventional_dram_gb_per_accelerator:
+    value: {2025: 150, 2026: 175, 2027: 185, 2028: 210, 2030: 260, 2032: 310}
+    unit: gb_per_unit
+    source: https://www.trendforce.com/presscenter/news/20260610-13090.html
+    confidence: low
+    notes: >
+      NVIDIA halved SOCAMM per Vera CPU (TrendForce 2026-06-10), and the big three's 2027
+      LPDDR allocations cover ~60% of NVIDIA's estimated need. RDIMM per server was cut in
+      1H26. 2027 is ~0.7x the unrationed 270.
+
+demand_conventional:
+  pc:
+    units_millions:
+      value: {2025: 268, 2026: 248, 2027: 230, 2028: 238, 2030: 252, 2032: 262}
+      unit: millions_of_units
+      source: https://www.tweaktown.com/news/114035/pc-shipments-fell-by-a-massive-20-year-over-year-last-quarter-and-yes-its-due-to-the-memory-crisis/index.html
+      confidence: medium
+      notes: >
+        2026 = Q1-Q3 observed (65.6 + 68.2 + 62.7) plus Q4 at about -25% YoY (Omdia -24%,
+        Counterpoint -27%). 2027 -7% (Omdia). IDC: no memory relief before end-2027.
+    dram_gb_per_unit:
+      value: {2025: 20, 2026: 20, 2027: 22, 2028: 25, 2030: 31, 2032: 38}
+      unit: gb_per_unit
+      source: https://www.mobileworldlive.com/devices/smartphone-players-lower-specs-to-counter-costs/
+      confidence: low
+      notes: >
+        OEMs shipping 16GB where the trend was 24-32GB, and killing low-end SKUs.
+        Roughly 0.8x the unrationed path.
+    nand_tb_per_unit:
+      value: {2025: 1.1, 2026: 1.1, 2028: 1.5, 2030: 2.0, 2032: 2.6}
+      unit: tb_per_unit
+      source: https://www.trendforce.com/presscenter/news/20260930-13258.html
+      confidence: low
+      notes: Client-SSD capacities cut in mainstream models (TrendForce 2026-09-30).
+  smartphone:
+    units_millions:
+      value: {2025: 1235, 2026: 1090, 2027: 1060, 2028: 1110, 2030: 1160, 2032: 1190}
+      unit: millions_of_units
+      source: https://www.fonearena.com/blog/495163/global-smartphone-shipments-q3-2026-idc.html
+      confidence: medium
+      notes: >
+        2026 = Q1-Q3 observed (296 + 277.5 + 255.3) plus Q4 at about -20% YoY. IDC's
+        February full-year view was -12.9% (~1.12bn) and is likely to be cut. Samsung
+        expects 2027 smartphone units to fall again, mainly mid and entry tiers.
+    dram_gb_per_unit:
+      value: {2025: 8.4, 2026: 8.5, 2027: 9.2, 2028: 10.3, 2030: 12.8, 2032: 15.3}
+      unit: gb_per_unit
+      source: https://www.mobileworldlive.com/devices/smartphone-players-lower-specs-to-counter-costs/
+      confidence: medium
+      notes: >
+        TrendForce: average smartphone DRAM 8.5GB in 2026 (+10% YoY, mostly mix shift
+        away from low-RAM phones) against the unrationed trend of 9.6GB. ~0.85x after.
+    nand_tb_per_unit:
+      value: {2025: 0.22, 2026: 0.23, 2028: 0.29, 2030: 0.36, 2032: 0.44}
+      unit: tb_per_unit
+      source: DERIVED
+      confidence: low
+      notes: ~0.9x the unrationed path; storage tiers cut less than DRAM.
+  servers_traditional:
+    dram_gb_per_unit:
+      value: {2025: 1000, 2026: 1070, 2027: 1250, 2028: 1440, 2029: 1650, 2030: 1870, 2031: 2100, 2032: 2340}
+      unit: gb_per_unit
+      source: https://investors.micron.com/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf
+      confidence: low
+      notes: >
+        0.9x the unrationed path. Micron (2026-09-30): server unit growth in the high
+        teens "supported by a modestly lower rate of content growth than prior
+        expectations, amid tight memory supply". RDIMM capacities cut in 1H26.

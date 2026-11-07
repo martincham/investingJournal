@@ -37,6 +37,9 @@ class RunResult:
         dad = sum(self.dram[i].addressable_demand_bits for i in idx)
         ns = sum(self.nand[i].global_supply_bits for i in idx)
         nd = sum(self.nand[i].global_demand_bits for i in idx)
+        # Demand at current prices (Nov 2026). Global scope, same supply denominator.
+        dp = sum(self.demand[i].at_price.dram_total_bits for i in idx)
+        np_ = sum(self.demand[i].at_price.nand_total_bits for i in idx)
         from . import units
 
         return {
@@ -48,6 +51,10 @@ class RunResult:
             "nand_supply_eb": units.bits_to_eb(ns),
             "nand_demand_eb": units.bits_to_eb(nd),
             "nand_gap": nd / ns - 1.0 if ns else 0.0,
+            "dram_demand_at_price_eb": units.bits_to_eb(dp),
+            "dram_gap_at_price": dp / ds - 1.0 if ds else 0.0,
+            "nand_demand_at_price_eb": units.bits_to_eb(np_),
+            "nand_gap_at_price": np_ / ns - 1.0 if ns else 0.0,
             "binding": self.supply[idx[-1]].binding_wafer_constraint,
             "hbm_binding": self.supply[idx[-1]].binding_hbm_constraint,
         }

@@ -27,6 +27,26 @@ from .fleet import FleetQuarter, fleet_series
 
 CONSUMER_SEGMENTS = {"pc", "smartphone", "graphics", "console"}
 
+# The two demand lines. "unrationed" is the model's headline: demand at 2025 prices.
+# "at_price" is demand if real prices stay at today's level (Nov 2026): the rationed
+# line. See assumptions/demand_at_price.yaml.
+BASES = ("unrationed", "at_price")
+
+
+def _input(a: Assumptions, path: str, q: Quarter, basis: str) -> dict[int, float]:
+    """An input series, swapped for its demand_at_price.* counterpart where one exists.
+
+    Only from actuals.rationing_start: before the shortage the two lines are the same
+    line. An input with no at-price counterpart is, by construction, one that today's
+    prices do not move.
+    """
+    if basis == "at_price" and q >= actuals.rationing_start(a):
+        try:
+            return a.series(f"demand_at_price.{path}")
+        except KeyError:
+            pass
+    return a.series(path)
+
 
 @dataclass
 class DemandQuarter:
@@ -56,6 +76,10 @@ class DemandQuarter:
     fleet_power_gw: float = 0.0
     available_power_gw: float = 0.0
     is_actual: bool = False
+
+    basis: str = "unrationed"
+    # The demand-at-current-prices twin of this quarter (set on the unrationed one only).
+    at_price: "DemandQuarter | None" = None
 
     @property
     def dram_eb(self) -> float:
@@ -113,8 +137,11 @@ def _kv_working_set_bits(a: Assumptions, q: Quarter) -> float:
     return bytes_total * units.BITS_PER_BYTE
 
 
-def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter) -> DemandQuarter:
-    out = DemandQuarter(quarter=q)
+def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter,
+                   basis: str = "unrationed") -> DemandQuarter:
+    if basis not in BASES:
+        raise ValueError(f"basis must be one of {BASES}, got {basis!r}")
+    out = DemandQuarter(quarter=q, basis=basis)
     dram: dict[str, float] = {}
     nand: dict[str, float] = {}
     out.is_actual = actuals.is_actual(a, q)
@@ -148,9 +175,9 @@ def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter) -> DemandQuarter
     # Memory content comes from the vintage actually being shipped this quarter, so the
     # HBM step-ups (192 -> 288 -> ~1TB) are tied to the fleet's generation, not to a
     # free-floating series.
-    hbm_gb = interpolate_annual(a.series("demand_ai.hbm_gb_per_accelerator"), q)
-    host_gb = interpolate_annual(a.series("demand_ai.conventional_dram_gb_per_accelerator"), q)
-    nand_tb = interpolate_annual(a.series("demand_ai.nand_tb_per_accelerator"), q)
+    hbm_gb = interpolate_annual(_input(a, "demand_ai.hbm_gb_per_accelerator", q, basis), q)
+    host_gb = interpolate_annual(_input(a, "demand_ai.conventional_dram_gb_per_accelerator", q, basis), q)
+    nand_tb = interpolate_annual(_input(a, "demand_ai.nand_tb_per_accelerator", q, basis), q)
 
     dram["hbm"] = units.gb_to_bits(accel_q * hbm_gb) * eff
     dram["ai_server_host"] = units.gb_to_bits(accel_q * host_gb) * eff
@@ -163,6 +190,14 @@ def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter) -> DemandQuarter
     nand_off = interpolate_annual(a.series("demand_ai.kv_cache.offload_to_nand_share"), q)
     dram["kv_offload"] = kv_bits * dram_off * eff
     nand["kv_offload"] = kv_bits * nand_off
+
+    # Agentic-AI CPU servers (Nov 2026): CPU-only boxes bought for agent orchestration,
+    # on top of the traditional fleet. Inelastic core, like the rest of this block.
+    u_cpu = interpolate_annual(a.series("demand_ai.ai_cpu_server.units_millions"), q) * 1e6 / 4.0
+    gb_cpu = interpolate_annual(_input(a, "demand_ai.ai_cpu_server.dram_gb_per_unit", q, basis), q)
+    tb_cpu = interpolate_annual(_input(a, "demand_ai.ai_cpu_server.nand_tb_per_unit", q, basis), q)
+    dram["ai_cpu_server"] = units.gb_to_bits(u_cpu * gb_cpu)
+    nand["ai_cpu_server"] = units.tb_to_bits(u_cpu * tb_cpu)
 
     # Top-down cross-check on the bottom-up accelerator count.
     capex = interpolate_annual(a.series("demand_ai.hyperscaler_capex_usd_bn"), q) * 1e9
@@ -177,14 +212,16 @@ def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter) -> DemandQuarter
         # constraints -- but they are what shipped, and the demand line's job is to say
         # what those buyers WOULD have taken at 2025 prices. Hence: actual units, TREND
         # content per unit.
-        u = actuals.conventional_units(a, seg, q)
+        # Nov 2026: from actuals.rationing_start, observed PC/phone units pin only the
+        # at-price line (see actuals.RATIONED_UNIT_SEGMENTS).
+        u = actuals.conventional_units(a, seg, q, basis)
         if u is None:
             u = interpolate_annual(
-                a.series(f"demand_conventional.{seg}.units_millions"), q
+                _input(a, f"demand_conventional.{seg}.units_millions", q, basis), q
             ) * 1e6 / 4.0
             u *= _seasonal(a, q, seg)
-        gb = interpolate_annual(a.series(f"demand_conventional.{seg}.dram_gb_per_unit"), q)
-        tb = interpolate_annual(a.series(f"demand_conventional.{seg}.nand_tb_per_unit"), q)
+        gb = interpolate_annual(_input(a, f"demand_conventional.{seg}.dram_gb_per_unit", q, basis), q)
+        tb = interpolate_annual(_input(a, f"demand_conventional.{seg}.nand_tb_per_unit", q, basis), q)
         dram[seg] = units.gb_to_bits(u * gb)
         nand[seg] = units.tb_to_bits(u * tb)
 
@@ -208,7 +245,7 @@ def demand_quarter(a: Assumptions, q: Quarter, f: FleetQuarter) -> DemandQuarter
     # demand for NEW DRAM. A genuine force against the shortage, applied to the server
     # pools where pooling actually happens.
     cxl = interpolate_annual(a.series("demand_conventional.cxl_pooling_savings"), q)
-    for seg in ("servers_traditional", "ai_server_host"):
+    for seg in ("servers_traditional", "ai_server_host", "ai_cpu_server"):
         dram[seg] *= 1.0 - cxl
 
     # S30. Inventory. Customers and the channel buying ahead (or refusing to buy while
@@ -245,4 +282,9 @@ def demand_series(a: Assumptions, timeline: list[Quarter],
     quarter's retirements), then read demand off it."""
     power = power_series(a, timeline)
     fleet = fleet_series(a, timeline, power, supply_cap_units=packaging_cap)
-    return [demand_quarter(a, q, f) for q, f in zip(timeline, fleet)]
+    out = []
+    for q, f in zip(timeline, fleet):
+        d = demand_quarter(a, q, f)
+        d.at_price = demand_quarter(a, q, f, basis="at_price")
+        out.append(d)
+    return out

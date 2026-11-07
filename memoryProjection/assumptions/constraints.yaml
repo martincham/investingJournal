@@ -24,8 +24,19 @@
 # faster than the fleet does. Whether that happens is what C2 exists to answer.
 litho:
   euv_scanners_available_to_memory:
-    value: {2018: 2, 2020: 8, 2022: 20, 2024: 34, 2025: 45, 2026: 58, 2027: 72,
-            2028: 88, 2029: 104, 2030: 120, 2031: 136, 2032: 152}
+    value:
+      2018: 2
+      2020: 8
+      2022: 20
+      2024: 34
+      2025: 45
+      2026: 70
+      2027: 102
+      2028: 135
+      2029: 165
+      2030: 195
+      2031: 225
+      2032: 255
     unit: cumulative_scanners
     source: https://www.sec.gov/Archives/edgar/data/937966/000162828026011377/asml-2025xannualxreportx.htm
     confidence: low
@@ -34,6 +45,9 @@ litho:
       across all customers and logic takes the majority, so memory's share is
       assumed ~30-35% of shipments, accumulating. Applies to ex-China DRAM only --
       CXMT has no EUV access under export controls (see china.yaml).
+      Nov 2026: adds raised to ~25-33/yr. ASML: memory ~46% of 3Q26 system sales, ~65 low-NA
+      EUV shipped in 2026, 2027 capacity +~30%. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F4.2.
   wafer_layers_per_scanner_month:
     value: 104000
     unit: wafer_layers_per_month
@@ -41,8 +55,18 @@ litho:
     confidence: medium
     notes: ~160 wph x 24h x 30d x 0.90 availability.
   euv_layers_per_dram_wafer:
-    value: {2020: 1, 2022: 1, 2024: 1.5, 2025: 2, 2026: 2, 2027: 3, 2028: 3.5,
-            2029: 4, 2030: 5, 2031: 5.5, 2032: 6}
+    value:
+      2020: 1
+      2022: 1
+      2024: 1.5
+      2025: 3
+      2026: 4
+      2027: 5
+      2028: 6
+      2029: 6.5
+      2030: 7
+      2031: 7.5
+      2032: 8
     unit: layers
     source: DERIVED
     confidence: low
@@ -50,6 +74,9 @@ litho:
       1gamma runs ~1-2 EUV layers. Rising sharply through 1delta/0a. This is the term
       that decides whether C2 ever binds: the fleet grows roughly linearly while
       layers-per-wafer also grows, so the ceiling can flatten even as scanners arrive.
+      Nov 2026: raised: 1b uses ~4 EUV layers and 1c 5-6 (SK hynix 1c reported at six).
+      Moved together with euv_scanners_available_to_memory, which was low by a similar
+      factor. See investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F4.3.
   euv_dependent_share_of_dram_wafers:
     value: {2018: 0.0, 2019: 0.0, 2020: 0.03, 2021: 0.08, 2022: 0.15, 2023: 0.22,
             2024: 0.32, 2025: 0.42, 2026: 0.50, 2027: 0.58, 2028: 0.66, 2029: 0.72,
@@ -124,12 +151,25 @@ test:
 # with no interposer to sit on is inventory, not supply.
 advanced_packaging:
   cowos_wafers_kwpm:
-    value: {2023: 15, 2024: 35, 2025: 70, 2026: 110, 2027: 150, 2028: 190,
-            2029: 230, 2030: 270, 2031: 300, 2032: 330}
+    value:
+      2023: 15
+      2024: 35
+      2025: 70
+      2026: 110
+      2027: 150
+      2028: 230
+      2029: 270
+      2030: 300
+      2031: 330
+      2032: 360
     unit: thousand_wafers_per_month
     source: DERIVED
     confidence: low
-    notes: TSMC CoWoS-L/-S capacity. The most-watched number in the AI supply chain.
+    notes: >
+      TSMC CoWoS-L/-S capacity. The most-watched number in the AI supply chain.
+      Nov 2026: 2028+ raised. TSMC CoWoS reportedly doubles from ~130k (end-2026) to ~260k
+      (end-2028), TSMC-only; OSATs add more. 2026-27 unchanged. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F4.5.
   accelerators_per_cowos_wafer:
     value: {2024: 28, 2026: 24, 2028: 20, 2030: 17, 2032: 15}
     unit: units

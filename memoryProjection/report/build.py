@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from model import config, scenarios, units
+from model import actuals, config, scenarios, units
 from model.calendar import Quarter, full_timeline
 
 HERE = Path(__file__).resolve().parent
@@ -26,7 +26,7 @@ SLIDER_POSITIONS = [0.5, 0.7, 0.85, 1.0, 1.15, 1.3, 1.5]
 # generated hue -- it folds into "Other".
 DEMAND_BANDS = {
     "HBM (AI accelerators)": ["hbm"],
-    "AI server host DRAM": ["ai_server_host", "kv_offload"],
+    "AI server host + agentic CPU servers": ["ai_server_host", "kv_offload", "ai_cpu_server"],
     "Servers (traditional)": ["servers_traditional"],
     "Smartphone": ["smartphone"],
     "PC": ["pc"],
@@ -48,6 +48,14 @@ def series(run) -> dict:
         "quarters": q,
         "dram_supply": [b.global_supply_eb * 4 for b in run.dram],   # annualised EB/yr
         "dram_demand": [b.global_demand_eb * 4 for b in run.dram],
+        # Nov 2026: demand if real prices stay at today's level (the rationed line).
+        # None before rationing_start, where it is identical to the unrationed line.
+        "dram_demand_at_price": [units.bits_to_eb(d.at_price.dram_total_bits) * 4
+                                 if d.quarter >= actuals.rationing_start(run.assumptions) else None
+                                 for d in run.demand],
+        "dram_gap_at_price": [(d.at_price.dram_total_bits / b.global_supply_bits - 1) * 100
+                              if d.quarter >= actuals.rationing_start(run.assumptions) else None
+                              for d, b in zip(run.demand, run.dram)],
         "dram_gap": [b.global_gap * 100 for b in run.dram],
         "dram_merchant_gap": [b.addressable_gap * 100 for b in run.dram],
         "dram_deficit": [b.deficit_eb * 4 for b in run.dram],

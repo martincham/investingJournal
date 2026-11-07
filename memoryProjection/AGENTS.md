@@ -7,21 +7,42 @@ model come from misreading what the numbers mean, not from the numbers.
 
 ## The one thing you must not get wrong
 
-The headline output is a **gap** (demand ÷ supply − 1, e.g. +44% in 2029). It is a
+The headline output is a **gap** (demand ÷ supply − 1, e.g. +27% in 2029). It is a
 **pressure index, not a forecast of missing bits.** The model deliberately switches off
 the three things that end every real memory shortage — producer discipline, buyer
 destocking, and a capacity-investment supply response — plus price elasticity. So the gap
-*cannot* close by construction (`p_gap_closed ≈ 0` in out-years). That zero is a property
-of the model's shape, **not** evidence a glut is unlikely. If you quote the gap as
+is biased toward staying open. Since the November 2026 vintage the out-years include
+announced fabs and a faster node cadence, and `p_gap_closed` rises from ~2% (2027) to
+~13% (2030) and ~42% (2032); before that it was ≈ 0 by construction. Either way it is
+biased low, **not** evidence about how likely a glut is. If you quote the gap as
 "bits the world will be short," you are wrong. Quote it as "how hard price and rationing
 have to work."
 
-Corollary an agent will trip on: **AI/datacenter demand is never rationed in this model.**
-The inelastic core (HBM, AI host DRAM, KV offload, AI eSSD, auto/industrial) peaks near
-~⅓ of world DRAM bits and always fits under supply; HBM specifically runs in slight
-surplus every year (`hbm_is_capped` is false in all quarters). The *entire* gap is the
-contested consumer pool (PC, phone, console, graphics, traditional servers) getting
-squeezed from 100% served to ~60% served. Report those two pieces separately if you can.
+Corollary an agent will trip on: **on the unrationed line, AI/datacenter demand is served
+first and in full.** The inelastic core (HBM, AI host DRAM, KV offload, AI eSSD, agentic
+CPU servers, auto/industrial) fits under supply, and HBM runs in surplus through 2031
+(`hbm_is_capped` is true only in 2032Q2–Q4, where the test ceiling C5 binds). The gap is
+therefore the contested consumer pool (PC, phone, console, graphics, traditional servers)
+getting squeezed. Report those two pieces separately if you can.
+
+**But reality now rations AI too (Nov 2026).** NVIDIA halved SOCAMM per Vera CPU, Rubin
+Ultra is being tested with 192–384GB instead of 1TB, CSPs are evaluating 8-Hi HBM for
+2027 ASICs, and LPDDR allocations cover ~60% of NVIDIA's 2027 need. That is price
+rationing of AI memory per unit. It lives in the second demand line below, not in the
+unrationed one.
+
+## The second demand line: demand at current prices (Nov 2026)
+
+`balance.demand_at_price_eb` / `gap_at_price`, `annual_summary.*_at_price*`, and the
+per-segment `demand_segment_at_price` table hold **demand if real prices stay at their
+2026Q3 level** (inputs: `assumptions/demand_at_price.yaml`). It equals the unrationed line
+before `actuals.rationing_start` (2026Q1) and is never above it after. Read it as: positive
+`gap_at_price` = today's prices are still too low to clear the market, so prices must rise
+further; negative = today's prices would leave bits unsold, so prices fall. In observed
+2026 quarters it is positive and shrinking (+18%, +15%, +12%), matching blended ASP gains
+of +80%, +52%, +21%. Note 2025Q1, at roughly flat prices, already shows +6%: treat ~5% as
+the model's baseline demand-over-supply offset, not as signal. The at-price line is a
+counterfactual at a held price, not a price forecast.
 
 ## Fastest way to get numbers: query the SQLite, don't re-run
 
@@ -53,22 +74,32 @@ Tables (all keyed by `scenario` ∈ {tight, central, loose} and usually `quarter
 | `capex_crosscheck` | can the world afford the accelerators demand implies (the top-down check) |
 | `tornado` | sensitivity: gap_low/gap_high per slider, ranked |
 | `assumption` | **every input flattened**: `key`, `value_json`, `unit`, `source`, `confidence`, `notes` |
-| `run_meta` | key/value: generation time, `actuals_end` (2026Q2), timeline, confidence audit |
+| `run_meta` | key/value: generation time, `actuals_end` (2026Q3), timeline, confidence audit |
 
 Segments in `demand_segment`: inelastic = `hbm`, `ai_server_host`, `kv_offload`,
-`ai_essd`, `auto_industrial_iot`; contested = `pc`, `smartphone`, `console`, `graphics`,
+`ai_essd`, `ai_cpu_server` (new Nov 2026: agentic-AI CPU servers), `auto_industrial_iot`; contested = `pc`, `smartphone`, `console`, `graphics`,
 `servers_traditional`, `other`; plus `inventory` (a swing term, not a buyer — exclude it
 when summing end-demand).
 
-Everything at/before **2026Q2 is observed data** (`is_actual=1`), overrides the model, and
+Everything at/before **2026Q3 is observed data** (`is_actual=1`), overrides the model, and
 carries no supply uncertainty band. Do not "correct" an actual against the model.
+
+## Vintages: earlier projections, frozen
+
+`vintages/<YYYY-MM>/` holds each published projection exactly as it was produced:
+`memory_model.sqlite`, `memory_model.html`, a copy of `assumptions/`, and `VINTAGE.md`
+(commit, actuals cutoff, sqlite sha256). Never edit or re-run one. `report/vintages.html`
+puts them side by side with a slider. micronProjection reads a vintage by path and sha256,
+never `report/`, so re-running here cannot move its numbers until it is repointed.
 
 ## Re-running the model (only when you changed an input)
 
 ```bash
-./.venv/bin/python -m pytest tests/ -q     # 50 tests — the overclaim guard; run first
+./.venv/bin/python -m pytest tests/ -q     # 59 tests — the overclaim guard; run first
 ./.venv/bin/python -m report.build         # -> report/memory_model.html
 ./.venv/bin/python -m report.export        # -> report/memory_model.sqlite (re-query after this)
+./.venv/bin/python -m report.freeze YYYY-MM # -> vintages/YYYY-MM/ (only to publish a new projection)
+./.venv/bin/python -m report.compare        # -> report/vintages.html
 ```
 
 If `.venv` is missing: `python3 -m venv .venv && ./.venv/bin/pip install numpy pandas pyyaml plotly pytest`.
@@ -90,7 +121,7 @@ not an input. Start points: `demand_ai.yaml` (efficiency deflator, HBM-per-accel
 ## Model code map (`model/`)
 
 `units.py` bit/GB/EB converters (the 8× Gb/GB footgun) · `calendar.py` quarterly index +
-fab ramps · `actuals.py` reality overrides through 2026Q2 · `supply.py` capacity→bits, HBM
+fab ramps · `actuals.py` reality overrides through 2026Q3 · `supply.py` capacity→bits, HBM
 trade-ratio, the C1–C6 `min()` and argmin · `datacenter.py` announced→delivered GW ·
 `fleet.py` vintages, viability, replacement demand · `demand.py` segment build-up, KV-cache
 sub-model, efficiency deflator, inventory · `china.py` captive-region netting ·

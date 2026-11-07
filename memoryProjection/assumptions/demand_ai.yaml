@@ -21,8 +21,20 @@
 # The series below is BLENDED across the whole accelerator mix, so it sits below the
 # flagship numbers -- inference ASICs carry far less HBM than a training flagship.
 hbm_gb_per_accelerator:
-  value: {2018: 16, 2020: 32, 2022: 64, 2023: 80, 2024: 130, 2025: 240, 2026: 280,
-          2027: 330, 2028: 410, 2029: 500, 2030: 610, 2031: 730, 2032: 880}
+  value:
+    2018: 16
+    2020: 32
+    2022: 64
+    2023: 80
+    2024: 130
+    2025: 240
+    2026: 280
+    2027: 330
+    2028: 380
+    2029: 460
+    2030: 550
+    2031: 650
+    2032: 760
   unit: gigabytes
   source: https://blog.barrack.ai/nvidia-rubin-specs-architecture-2026/
   confidence: medium
@@ -37,27 +49,65 @@ hbm_gb_per_accelerator:
     MUST STAY IN SYNC with the hbm_gb column of gpu_fleet.yaml:vintages -- a test
     asserts this. The fleet decides HOW MANY accelerators ship; this decides how much
     memory each one carries. Two files, one number.
+    Nov 2026: 2028+ flattened (2028 410->380, 2032 880->760). Rubin Ultra moved from the 1TB
+    four-die GTC design to two dies with ~384GB, partly for manufacturing reasons (Tom's
+    Hardware 2026-06-30), so part of the cut is a design change, not rationing. The further
+    cuts being tested (192GB, 8-Hi ASICs) ARE price rationing and live in
+    demand_at_price.yaml, not here. See
+    investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F3.2-F3.3.
 
 # D4. The underrated one. AI servers are full of NON-HBM DRAM: a Grace CPU carries
 # ~480GB of LPDDR5X, and an AI rack carries terabytes of DDR5 besides its HBM. AI
 # pulls commodity DRAM, not just HBM -- so you cannot escape the squeeze by buying
 # a server that has no HBM in it.
 conventional_dram_gb_per_accelerator:
-  value: {2020: 60, 2022: 90, 2024: 120, 2025: 150, 2026: 175, 2027: 200,
-          2028: 230, 2029: 260, 2030: 290, 2031: 320, 2032: 350}
+  value:
+    2020: 60
+    2022: 90
+    2024: 120
+    2025: 150
+    2026: 220
+    2027: 270
+    2028: 300
+    2029: 330
+    2030: 360
+    2031: 390
+    2032: 420
   unit: gigabytes
   source: DERIVED
   confidence: low
-  notes: Host DDR5/LPDDR5X (SOCAMM/LPCAMM) per accelerator, incl. CPU-side memory.
+  notes: >
+    Host DDR5/LPDDR5X (SOCAMM/LPCAMM) per accelerator, incl. CPU-side memory.
+    Nov 2026: raised. Vera's host LPDDR was ~750GB/GPU at the original spec (~380 after
+    NVIDIA halved SOCAMM); blended with ASICs carrying far less, 175/200 was low as TREND
+    content. The halving and the ~60% LPDDR allocation for NVIDIA's 2027 need are rationing
+    and go in demand_at_price.yaml. CPU-only agentic servers are the separate ai_cpu_server
+    segment, so no double count. See
+    investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F3.4.
 
 # D8. AI NAND pull: QLC eSSD for data lakes, checkpointing, KV-cache offload.
 nand_tb_per_accelerator:
-  value: {2020: 2.0, 2022: 3.5, 2024: 6.0, 2025: 8.0, 2026: 10.0, 2027: 12.5,
-          2028: 15.0, 2029: 18.0, 2030: 21.0, 2031: 24.0, 2032: 28.0}
+  value:
+    2020: 2.0
+    2022: 3.5
+    2024: 6.0
+    2025: 8.0
+    2026: 14.0
+    2027: 18.0
+    2028: 22.0
+    2029: 26.0
+    2030: 30.0
+    2031: 34.0
+    2032: 38.0
   unit: terabytes
   source: DERIVED
   confidence: low
-  notes: 122TB/245TB-class QLC drives. NAND is no longer a consumer story.
+  notes: >
+    122TB/245TB-class QLC drives. NAND is no longer a consumer story.
+    Nov 2026: raised. Enterprise SSD bit demand >+80% in 2026 and eSSD now over half of NAND
+    revenue (TrendForce); NAND was in a 4-5% deficit all of 2026 while the July model showed
+    balance. The HDD-to-QLC substitution segment is still not modelled. See
+    investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F1.12.
 
 # D6. KV-cache sub-model. Cashes out "token demand is real" into actual bytes.
 #
@@ -70,12 +120,26 @@ nand_tb_per_accelerator:
 # double-count against hbm_gb_per_accelerator.
 kv_cache:
   tokens_served_trillions:
-    value: {2023: 30, 2024: 150, 2025: 500, 2026: 1500, 2027: 3200, 2028: 6000,
-            2029: 10000, 2030: 16000, 2031: 23000, 2032: 32000}
+    value:
+      2023: 100
+      2024: 1000
+      2025: 8000
+      2026: 60000
+      2027: 200000
+      2028: 450000
+      2029: 800000
+      2030: 1300000
+      2031: 1900000
+      2032: 2600000
     unit: trillions_of_tokens_per_year
     source: DERIVED
     confidence: speculative
-    notes: Reasoning and agentic workloads consume far more tokens per user-visible task.
+    notes: >
+      Reasoning and agentic workloads consume far more tokens per user-visible task.
+      Nov 2026: rescaled by ~40x. Google alone ran >3.2 quadrillion tokens/month in May 2026
+      (~38,000T/yr), and OpenRouter ~10 quadrillion/yr. This series is a LABEL: no model
+      code reads it, so the change moves no bits. The working-set inputs above drive the KV
+      tiers. See investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F2.7.
   peak_concurrent_sessions_millions:
     value: {2024: 2.0, 2025: 5.0, 2026: 12.0, 2027: 22.0, 2028: 36.0, 2029: 52.0,
             2030: 70.0, 2031: 88.0, 2032: 108.0}
@@ -138,9 +202,18 @@ efficiency_deflator_annual:
 # D9. Top-down cross-check on D1 x D2. If bottom-up and top-down disagree by >20%,
 # the model says so rather than quietly picking one.
 hyperscaler_capex_usd_bn:
-  value: {2023: 150, 2024: 230, 2025: 400, 2026: 620, 2027: 850, 2028: 1100,
-          2029: 1320, 2030: 1520, 2031: 1710, 2032: 1900}
-  unit: billions_usd_per_year
+  value:
+    2023: 150
+    2024: 230
+    2025: 400
+    2026: 650
+    2027: 900
+    2028: 1130
+    2029: 1330
+    2030: 1520
+    2031: 1700
+    2032: 1880
+  unit: billions_usd_2025
   source: DERIVED
   confidence: low
   notes: >
@@ -154,6 +227,19 @@ hyperscaler_capex_usd_bn:
     of annual AI capex in 2032 is absurd, then the accelerator count is too high and
     the demand line is overstated -- that is the honest reading, and it is exactly
     what this cross-check exists to expose.
+    Nov 2026: now explicitly REAL 2025 dollars, matching the demand definition. Nominal 2026
+    is ~$850-960bn (TrendForce nine CSPs $957bn) and 2027 >$1.5tn, but much of that is
+    memory and component inflation: TrendForce puts memory at 47% of CSP capex in 2026 and
+    68% in 2027, while AI server units grow only +32% and +36%. 2026-27 deflated with those
+    unit growth rates; later years keep the July growth path. avg_accelerator_asp_usd is
+    also in 2025 dollars. See
+    investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F2.1.
+    Nov 2026 (correction): deflating 2026 with AI-server unit growth from the 2025 value
+    gave $560bn, which makes capex bind and buys ~3.7M accelerators in 2026Q1 against 4.2M
+    actually shipped -- 2025's $400bn was itself below what 2025's units imply. Instead
+    anchored on observed units at the real ASP and capex share: ~18.6M units x $15.5k / 0.45
+    = ~$650bn (2026); +36% AI server units gives ~$900bn (2027); later years keep the July
+    growth rates. In real terms July's path was slightly LOW, not high.
 accelerator_share_of_capex:
   value: {2024: 0.40, 2026: 0.45, 2028: 0.44, 2030: 0.42, 2032: 0.40}
   unit: fraction
@@ -165,7 +251,10 @@ avg_accelerator_asp_usd:
   unit: usd
   source: DERIVED
   confidence: low
-  notes: Blended across flagship GPUs and much cheaper inference ASICs.
+  notes: >
+    Blended across flagship GPUs and much cheaper inference ASICs.
+    Nov 2026: read as REAL 2025 dollars, the same basis as hyperscaler_capex_usd_bn.
+    Unchanged.
 
 # D10. REMOVED: `power_ceiling`.
 #
@@ -176,3 +265,34 @@ avg_accelerator_asp_usd:
 #
 # This block was orphaned by that change and, like D1 above, was still wired to a slider
 # that did nothing at all.
+
+# ---------------------------------------------------------------------------
+# Agentic-AI CPU servers (Nov 2026). A new segment, in the inelastic core.
+# ---------------------------------------------------------------------------
+ai_cpu_server:
+  units_millions:
+    value: {2025: 0.0, 2026: 1.2, 2027: 3.0, 2028: 4.5, 2029: 5.8, 2030: 7.0, 2032: 9.0}
+    unit: millions_of_units
+    source: https://www.trendforce.com/research/download/RP261102UN
+    confidence: low
+    notes: >
+      CPU-heavy servers bought for agentic AI (orchestration, tool calls, sandboxes), on
+      top of the traditional fleet in demand_conventional.yaml. TrendForce (2026-11-02):
+      global server shipments up nearly 20% in both 2026 and 2027, server CPUs +31% and
+      >+40%, the CPU:accelerator ratio moving from 1:8 toward 1:2. Traditional servers
+      grow ~4%, so this is set to take total general-purpose servers to about +14%/yr in
+      2026-27 (the 20% headline includes AI servers). Out-years track accelerator growth.
+      Not the host CPUs inside accelerator servers -- those are
+      conventional_dram_gb_per_accelerator.
+  dram_gb_per_unit:
+    value: {2025: 1000, 2026: 1190, 2027: 1390, 2028: 1600, 2029: 1830, 2030: 2075, 2031: 2330, 2032: 2600}
+    unit: gb_per_unit
+    source: DERIVED
+    confidence: low
+    notes: Same as servers_traditional.dram_gb_per_unit; no separate content data yet.
+  nand_tb_per_unit:
+    value: {2025: 25, 2026: 29, 2028: 42, 2030: 57, 2032: 76}
+    unit: tb_per_unit
+    source: DERIVED
+    confidence: low
+    notes: Same as servers_traditional.nand_tb_per_unit.

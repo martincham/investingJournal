@@ -261,15 +261,18 @@
             <div class="card lede">
                 <h2>TL;DR: Memory will be squeezed and margins will remain large past 2032.</h2>
                 <p>
-                    DRAM/HBM demand at 2025 prices runs ahead of supply
-                    <em>past</em> 2032. In the central case the gap widens from
+                    DRAM/HBM demand at 2025 prices stays ahead of supply
+                    through 2032. In the central case the gap runs from
                     <strong
                         ><span id="ld-g26"></span> at end-2026 to
                         <span id="ld-g29"></span> by end-2029</strong
                     >
                     — a deficit of about <span id="ld-def"></span> EB/yr —
-                    before flattening. The constraint that binds in the
-                    out-years is plain wafer capacity and EUV lithography. AI is
+                    then narrows as new fabs and 3D DRAM arrive. At today's
+                    (2026Q3) prices demand still exceeds supply until about
+                    2031, so prices have further to rise before they fall.
+                    The constraint that binds is plain wafer capacity:
+                    cleanrooms, not tools. AI is
                     the driver, and because an AI rack carries terabytes of
                     ordinary DDR5 beside its HBM, the squeeze does not spare
                     buyers who never touch an HBM stack.
@@ -291,7 +294,7 @@
                         </div>
                     </div>
                     <div>
-                        <div class="n">Wafers &amp; EUV</div>
+                        <div class="n">Wafers</div>
                         <div class="l">What actually binds, 2027+</div>
                         <div class="sub2">not HBM back-end, not CoWoS</div>
                     </div>
@@ -330,22 +333,23 @@
                     </li>
                     <li>
                         <strong
-                            >The model can barely produce a glut after 2027, by
-                            construction.</strong
+                            >A glut is rare before 2030 and plausible by
+                            2032.</strong
                         >
                         Across <span id="ld-draws"></span> Monte Carlo draws,
-                        the chance the gap ever closes peaks at
-                        <strong><span id="ld-pc"></span></strong>. That
-                        near-zero is a fact about the model's shape, not
-                        evidence about the world — see
+                        the chance the gap closes stays at or below about 13%
+                        through 2030, then rises to
+                        <strong><span id="ld-pc"></span></strong> by 2032 as
+                        announced fabs and 3D DRAM arrive. The model still has
+                        no price response and no extra investment out of a
+                        shortage, so even that is likely an understatement — see
                         <a href="#limits" style="color: var(--s1)"
                             >what this model cannot show you</a
-                        >. Everything here varies the <em>size</em> of the
-                        shortage, never really its <em>sign</em>.
+                        >.
                     </li>
                     <li>
                         <strong
-                            >Everything through 2026Q2 is observed data, not
+                            >Everything through 2026Q3 is observed data, not
                             model output.</strong
                         >
                         Supply is pinned to it and carries no error bar there.
@@ -359,7 +363,7 @@
             <div class="card">
                 <h2>The two lines — DRAM</h2>
                 <p class="note">
-                    Everything up to <strong>2026Q2 is observed data</strong>,
+                    Everything up to <strong>2026Q3 is observed data</strong>,
                     not model output — so the supply line has
                     <em>no</em> uncertainty band there. After it, the shaded
                     band is the P10–P90 range from a 400-draw Monte Carlo,
@@ -398,7 +402,7 @@
                     >. The second term is replacement demand, and it is the
                     piece an exogenous shipments series cannot see — retiring an
                     A100 (80GB, 0.4kW) and refilling its watt with a Rubin Ultra
-                    (~1TB) is a large HBM purchase for <em>zero</em> net growth
+                    (~384GB) is a large HBM purchase for <em>zero</em> net growth
                     in power.
                 </p>
                 <div id="fleet" class="chart"></div>
@@ -534,10 +538,12 @@
                 </ul>
                 <p class="note">
                     So across <span id="lim-draws"></span> draws,
-                    <code>P(gap closed)</code> never rises above
-                    <strong><span id="lim-pc"></span></strong> in any out-year
-                    quarter. That near-zero is a property of the model's
-                    <em>shape</em>, not evidence about the world. The bands
+                    <code>P(gap closed)</code> peaks at
+                    <strong><span id="lim-pc"></span></strong> (2032), and stays
+                    at or below about 13% through 2030. Since the November 2026
+                    update the out-years include announced fabs and a faster
+                    node cadence, so closure is no longer near-zero, but the
+                    missing price and investment responses still bias it low. The bands
                     express uncertainty about <strong>how big</strong> the
                     shortage is; they say almost nothing about
                     <strong>whether</strong> there is one. Neither does the
@@ -545,9 +551,12 @@
                 </p>
                 <p class="note">
                     Three further absences worth holding in mind. There is
-                    <strong>no price layer</strong>, so demand never
-                    self-corrects. There is
-                    <strong>no supply response</strong> — a 40% gap in 2029
+                    <strong>no price layer</strong>: the purple line is demand
+                    if real prices stay at their 2026Q3 level, not a price
+                    forecast. There is
+                    <strong>no endogenous supply response</strong> — the
+                    out-year capacity now includes announced fabs, but a 25%
+                    gap in 2029
                     finances no extra fab, though in reality it obviously would;
                     memory is the textbook cobweb industry, and the roadmaps
                     this model takes as given are precisely what a gap like this
@@ -670,6 +679,7 @@
                 L('Supply', q, sp, css('--s1'), null, true),
                 L('Demand @ 2025 prices', q, dh, css('--s2'), 'dot', false),
                 L('Demand @ 2025 prices', q, dp, css('--s2'), null, true),
+                L('Demand @ 2026Q3 prices', q, s.dram_demand_at_price, css('--s5'), null, true),
               ], base({height:340, yaxis:{gridcolor:css('--grid'), title:{text:'EB / year',font:{size:12}},
                   zerolinecolor:css('--axis')},
                   shapes:[DIVIDER()],
@@ -692,6 +702,9 @@
                 {x:q, y:g, type:'scatter', mode:'lines', name:'Gap',
                  line:{color:css('--text-primary'), width:2},
                  hovertemplate:'%{y:+.1f}%<extra>gap</extra>', showlegend:false},
+                {x:q, y:s.dram_gap_at_price, type:'scatter', mode:'lines', name:'Gap @ 2026Q3 prices',
+                 line:{color:css('--s5'), width:2, dash:'dash'},
+                 hovertemplate:'%{y:+.1f}%<extra>gap @ 2026Q3 prices</extra>', showlegend:false},
               ], base({height:210, showlegend:false,
                 yaxis:{gridcolor:css('--grid'), ticksuffix:'%', zerolinecolor:css('--text-secondary'),
                        zerolinewidth:1.5, title:{text:'Gap: demand ÷ supply − 1', font:{size:12}}},

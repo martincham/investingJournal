@@ -180,9 +180,22 @@ seasonality:
 # a model that cannot reproduce the crashes has no business projecting the shortages.
 inventory_swing:
   dram_eb_per_year:
-    value: {2018: 1.0, 2019: -4.5, 2020: -1.0, 2021: 3.5, 2022: -4.0, 2023: -7.5,
-            2024: -1.5, 2025: 0.5, 2026: 1.5, 2027: 1.0, 2028: 0.0, 2029: 0.0,
-            2030: 0.0, 2031: 0.0, 2032: 0.0}
+    value:
+      2018: 1.0
+      2019: -4.5
+      2020: -1.0
+      2021: 3.5
+      2022: -4.0
+      2023: -7.5
+      2024: -1.5
+      2025: 0.5
+      2026: 1.5
+      2027: 0.0
+      2028: 0.0
+      2029: 0.0
+      2030: 0.0
+      2031: 0.0
+      2032: 0.0
     unit: exabytes_per_year
     source: https://www.trendforce.com/presscenter/news/20251126-12802.html
     confidence: medium
@@ -195,13 +208,31 @@ inventory_swing:
       Held at ZERO from 2028 -- projecting a restocking cycle would be inventing a
       demand signal, and it would flatter the gap. The out-year result should not
       depend on it.
+      Nov 2026: 2027 cut +1.0 -> 0.0: CSPs are restocking server DRAM, but PC and phone
+      makers are drawing down 1H26 pull-forward and IDC flags a phone channel build into
+      2027. Net about zero. See
+      investingJournal/aiGenerated/20261107-MemoryMarketTrendsNovember.md F1.5.
   nand_eb_per_year:
-    value: {2018: 20, 2019: -60, 2020: -20, 2021: 70, 2022: -100, 2023: -120,
-            2024: -30, 2025: 10, 2026: 30, 2027: 20, 2028: 0.0, 2030: 0.0, 2032: 0.0}
+    value:
+      2018: 20
+      2019: -60
+      2020: -20
+      2021: 70
+      2022: -100
+      2023: -120
+      2024: -30
+      2025: 10
+      2026: 30
+      2027: 0.0
+      2028: 0.0
+      2030: 0.0
+      2032: 0.0
     unit: exabytes_per_year
     source: DERIVED
     confidence: low
-    notes: Same cycle, same logic, NAND's larger bit scale.
+    notes: >
+      Same cycle, same logic, NAND's larger bit scale.
+      Nov 2026: 2027 cut +20 -> 0 for the same reason (client-SSD OEMs drawing down).
 
 # D22. A genuine bear lever: pooling raises utilisation of ALREADY-INSTALLED DRAM,
 # which reduces demand for NEW DRAM. Cuts against the shortage thesis.

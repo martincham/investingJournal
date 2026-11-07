@@ -65,8 +65,28 @@ def accelerator_units(a: Assumptions, q: Quarter) -> float | None:
     return m * 1e6 if m is not None else None
 
 
-def conventional_units(a: Assumptions, segment: str, q: Quarter) -> float | None:
-    """PC / smartphone / traditional-server unit shipments, in units (not millions)."""
+def rationing_start(a: Assumptions) -> Quarter:
+    """First quarter whose observed PC/phone counts are rationed outcomes (Nov 2026)."""
+    return Quarter.parse(str(a.value("actuals.rationing_start")))
+
+
+# Segments whose observed UNIT counts were cut by the shortage. From rationing_start they
+# pin only the demand-at-current-prices line; the unrationed line uses trend units.
+# Accelerators and servers are not here: AI rationing shows up in memory per unit.
+RATIONED_UNIT_SEGMENTS = frozenset({"pc", "smartphone"})
+
+
+def conventional_units(a: Assumptions, segment: str, q: Quarter,
+                       basis: str = "unrationed") -> float | None:
+    """PC / smartphone / traditional-server unit shipments, in units (not millions).
+
+    None means "no observed value applies -- use the modelled trend". On the unrationed
+    basis that includes rationed PC/phone quarters, which are observed but are not
+    unrationed demand.
+    """
+    if (basis == "unrationed" and segment in RATIONED_UNIT_SEGMENTS
+            and q >= rationing_start(a)):
+        return None
     path = {
         "pc": "actuals.pc_units_millions_per_quarter",
         "smartphone": "actuals.smartphone_units_millions_per_quarter",
