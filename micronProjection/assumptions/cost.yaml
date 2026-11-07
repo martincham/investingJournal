@@ -1,0 +1,125 @@
+# Micron's cash cost per bit.
+#
+# Calibrated against reality, not asserted: EDGAR gives quarterly COGS and InventoryNet,
+# so the cost of what Micron PRODUCED (rather than sold) is
+#     COGS + inventory_build
+# and dividing by our derived production bits gives cost per bit with no free parameter
+# in sight. The curve below then has to reproduce that observed series 2020-2026Q2.
+#
+# The mix trap this file exists to avoid: Micron's BLENDED cost per bit rises even while
+# every component falls, because HBM goes from ~0% to ~25% of its bits and an HBM bit
+# eats ~3x the wafer. A single-curve model reads that as the learning rate collapsing.
+# It did not collapse; the mix changed.
+
+# ANCHORED ON THE LAST ACTUAL, not fitted to history. Cost through 2026Q2 is derived
+# from the filings ((COGS + inventory_build) / production_bits); the curve only has a job
+# after that. Anchoring it where reality stops means the projection starts from an
+# observed number rather than from the residual of a six-year regression.
+base_year:
+  value: 2026.375
+  unit: fractional_year
+  source: DERIVED
+  confidence: high
+  notes: >
+    Midpoint of 2026Q2 -- the last quarter with reported data, and the same boundary as
+    asp.pin_end and upstream's actuals_end. The curve compounds forward from here only.
+
+commodity_cash_cost_per_gb_base:
+  value: 1.32
+  unit: usd_per_gigabyte
+  source: DERIVED
+  confidence: high
+  notes: >
+    Micron's observed commodity-equivalent cash cost per GB in 2026Q2, computed from
+    reported figures alone: (COGS + inventory_build) / production_bits, length-normalised.
+    "Commodity-equivalent" means Micron's bits are weighted by COST ratios (HBM ~3.05x,
+    NAND ~0.013x), so this is not a spot commodity cost quote -- it is the unit the rest
+    of the model runs in.
+
+    CASH, i.e. EXCLUDING the D&A that sits inside reported COGS. The full cost per bit in
+    the same quarter is $1.94/GB; the $0.62 difference is depreciation. The P&L adds D&A
+    back as its own line, so feeding it a full cost here double-counts it -- which an
+    earlier cut did, quietly removing ~15pp from projected gross margin.
+
+    THIS VALUE IS DOWNSTREAM OF OTHER ASSUMPTIONS and has been re-derived twice: it read
+    0.54 while nand_cost_ratio was wrong by 16x, then 1.94 while D&A was still in it, and
+    1.32 once both were fixed. Nothing about Micron changed at any point -- the unit did.
+    If nand_cost_ratio or dna_in_cogs_share moves, RE-DERIVE this rather than nudging it,
+    or the projection starts from a cost the actuals never had and revenue steps at the
+    seam. test_modelled_cost_anchors_on_the_last_actual holds it to the derived series.
+
+learning_rate_annual:
+  value: {2018: 0.075, 2020: 0.07, 2023: 0.065, 2026: 0.06, 2029: 0.05, 2032: 0.045}
+  unit: fraction_per_year
+  source: DERIVED
+  confidence: low
+  notes: >
+    Annual decline in commodity DRAM cash cost per bit.
+
+    MEASURED, NOT ASSUMED, AND FAR LOWER THAN THE FOLKLORE. The industry quotes 15-20%/yr.
+    Micron's actual commodity-equivalent cash cost per bit went $2.86/GB (2020Q2) ->
+    $1.83/GB (2025Q2) -> $1.94/GB (2026Q2): 6.3%/yr end to end. A first cut of this file
+    asserted 17% decaying to 9%, which the derived series does not support -- the folklore
+    figure is a PER-NODE number, and nodes no longer arrive annually.
+    The year-by-year series is noisy (+6% in some glut years) because cost per bit rises
+    when fabs run slow: fixed cost over fewer bits. That utilisation effect is real and
+    is NOT modelled here, which is one reason the out-year cost path is low confidence.
+
+    The DECAY is the important half. Bits per wafer used to come from lithographic
+    shrink; they now come from stacking and high-aspect-ratio etch, which are slower and
+    more capital-hungry. Upstream's own dram_gb_per_wafer implies the same slowdown
+    (+12.5%/yr 2018-2021 vs +6.5%/yr 2029-2032), so a constant rate here would contradict
+    the density path of the bit model this is built on.
+
+    DOUBLE DUTY, and why it earns a tornado slot: with the ASP anchor, this curve is also
+    what walks ASP DOWN off its plateau in the out-years. It moves revenue and cost in
+    the same direction, so its net effect on margin is not obvious a priori.
+
+hbm_cost_multiple:
+  value: {2020: 2.6, 2022: 2.5, 2023: 2.6, 2025: 3.05, 2026: 3.05, 2027: 3.25,
+          2028: 3.35, 2029: 3.4, 2030: 3.45, 2031: 3.5, 2032: 3.5}
+  unit: ratio_vs_commodity_cost_per_bit
+  source: DERIVED
+  confidence: medium
+  notes: >
+    HBM cash cost per bit relative to commodity. DERIVED from upstream's
+    tech_roadmap.hbm_trade_ratio (2.85 -> 3.3), not fitted independently -- an HBM bit
+    consumes that many times the wafer, so it carries that many times the wafer-driven
+    cost. Set ~0.2 above the trade ratio for the extras the trade ratio does not capture:
+    TSV, die thinning, stacking yield loss, and HBM test time (3-5x commodity, per
+    upstream's C5 constraint).
+
+    Deriving rather than fitting keeps the two models consistent: if upstream revises the
+    trade ratio, this must move with it. test_hbm_cost_multiple_tracks_trade_ratio holds
+    the relationship.
+
+nand_cost_ratio:
+  value: {2018: 0.026, 2020: 0.019, 2023: 0.014, 2025: 0.013, 2028: 0.011, 2032: 0.009}
+  unit: ratio_vs_commodity_dram_cost_per_bit
+  source: DERIVED
+  confidence: low
+  notes: >
+    NAND cash cost per bit as a fraction of commodity DRAM's. Set ~15% below
+    asp.nand_asp_ratio so NAND carries a positive but thinner margin than DRAM, which is
+    its long-run character.
+
+    SAME 16x TRAP as the ASP ratio -- see the note there. NAND ships ~25x more bytes than
+    DRAM, so a per-GB ratio that looks "roughly right" can be an order of magnitude out
+    and will dominate every blended figure it touches. Check it against byte volumes.
+
+dna_in_cogs_share:
+  value: {2018: 0.90, 2023: 0.90, 2026: 0.90, 2032: 0.90}
+  unit: fraction_of_reported_dna
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Share of Micron's REPORTED D&A that sits in COGS rather than in R&D/SG&A. Micron is a
+    manufacturer: the overwhelming majority of its depreciation is fab equipment, which is
+    a cost of production. ~90% is the standard split for a company with this asset base.
+
+    This replaced `cogs_dna_share` (share of COGS that is D&A), which was never referenced
+    by any code -- and its absence was a real bug, not a tidy-up. Without it,
+    cash_cost_per_bit was computed as (COGS + inventory_build)/bits, which is a FULL cost
+    because COGS contains D&A. The P&L then added D&A on top, double-counting it and
+    removing ~15pp from projected gross margin. Using REPORTED D&A x this share is better
+    than assuming a share of COGS, because the numerator is then a filed number.

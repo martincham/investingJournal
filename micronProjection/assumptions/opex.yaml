@@ -1,0 +1,82 @@
+# Everything below gross profit.
+#
+# Through 2026Q2 these are not used at all -- the income statement is Micron's reported
+# one, verbatim. They only drive the projection.
+
+rnd_usd_bn_per_quarter:
+  value: {2020: 0.61, 2022: 0.77, 2023: 0.80, 2025: 0.90, 2026: 1.05,
+          2028: 1.30, 2030: 1.50, 2032: 1.70}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Modelled in DOLLARS, not as a percentage of revenue, and that choice matters more
+    than the level. R&D is a roadmap commitment: Micron spent ~$0.8bn/quarter straight
+    through FY23 while revenue halved and margins went negative. A percent-of-revenue
+    rule would have cut R&D 50% in the trough and doubled it in the FY26 boom, which is
+    the opposite of what the company did and would flatter trough EPS badly.
+    Grown roughly with the node cadence and the HBM/3D-DRAM program load.
+
+sga_usd_bn_per_quarter:
+  value: {2020: 0.25, 2022: 0.28, 2023: 0.29, 2025: 0.34, 2026: 0.42,
+          2028: 0.50, 2030: 0.56, 2032: 0.62}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Also in dollars, for the same reason, though SG&A is a little more variable than R&D
+    (it carries incentive comp, which does swing with profit). The 2026 step reflects
+    that.
+
+tax_rate:
+  value: {2020: 0.09, 2022: 0.10, 2023: 0.05, 2025: 0.12, 2026: 0.14,
+          2028: 0.16, 2030: 0.16, 2032: 0.16}
+  unit: fraction_of_pretax_income
+  source: DERIVED
+  confidence: low
+  notes: >
+    Effective rate on pre-tax income. Micron's has historically been low -- Singapore and
+    Taiwan manufacturing, plus US credits -- and drifts up toward the ~15% global minimum
+    (Pillar Two) as that phases in.
+    In loss-making quarters the model does NOT apply this rate as a benefit: Micron
+    carried valuation allowances through FY23 rather than booking the full shield. See
+    model/pnl.py.
+
+other_income_usd_bn_per_quarter:
+  value: {2020: -0.03, 2023: -0.05, 2025: 0.0, 2026: 0.10, 2028: 0.15, 2032: 0.20}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: low
+  notes: >
+    Net interest and other, below EBIT. Turns positive as the FY26 cash pile builds and
+    debt is retired. Small enough that it never changes a conclusion.
+
+capex_intensity:
+  value: {2020: 0.34, 2022: 0.30, 2023: 0.46, 2025: 0.38, 2026: 0.22,
+          2028: 0.26, 2030: 0.28, 2032: 0.30}
+  unit: fraction_of_revenue
+  source: DERIVED
+  confidence: low
+  notes: >
+    Capex as a share of revenue. Percent-of-revenue is a poor model of capex in a boom --
+    FY26 revenue is exploding faster than any fab plan can spend -- which is why the 2026
+    figure drops to 0.22 and then recovers. It is a reduced form, and it is the weakest
+    part of the cash-flow layer.
+
+    CROSS-CHECK, and this is what keeps it honest: capex must be roughly consistent with
+    the wafer capacity upstream says Micron adds (385 -> 725 kwspm 2025->2032). If our
+    capex implies far fewer or far more wafers than that, the two models disagree about
+    what Micron is building. test_capex_is_consistent_with_upstream_wafer_adds checks it.
+
+dna_usd_bn_per_quarter:
+  value: {2020: 1.75, 2022: 1.85, 2023: 1.95, 2025: 2.10, 2026: 2.30,
+          2028: 3.10, 2030: 3.80, 2032: 4.40}
+  unit: billions_usd_per_quarter
+  source: DERIVED
+  confidence: medium
+  notes: >
+    Depreciation & amortisation, in dollars. Follows the capital base with a lag rather
+    than tracking revenue: it is the accumulated capex of the last ~5-7 years, so it
+    keeps rising through downturns. That stickiness is precisely why Micron's gross
+    margin goes NEGATIVE in a trough rather than merely thin -- D&A does not care that
+    prices collapsed.
