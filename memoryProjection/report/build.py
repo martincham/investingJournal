@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from model import actuals, config, scenarios, units
+from model import actuals, config, market, scenarios, units
 from model.calendar import Quarter, full_timeline
 
 HERE = Path(__file__).resolve().parent
@@ -65,6 +65,19 @@ def series(run) -> dict:
         "binding": [s.binding_wafer_constraint for s in run.supply],
         "binding_margin": [s.wafer_margin_to_next * 100 for s in run.supply],
         "hbm_supply": [units.bits_to_eb(s.dram_hbm_bits) * 4 for s in run.supply],
+    }
+
+
+def market_payload(run, kappa: float) -> dict:
+    """Industry DRAM price layer (Nov 2026), for the price and margin charts."""
+    m = market.market_series(run, kappa)
+    return {
+        "quarters": [x.quarter.label for x in m],
+        "price": [x.price_usd_per_gb for x in m],
+        "ceiling": [x.price_ceiling_usd_per_gb for x in m],
+        "gm": [None if x.gross_margin is None else x.gross_margin * 100 for x in m],
+        "revenue": [x.revenue_usd_bn * 4 for x in m],   # annualised $bn
+        "actual": [x.is_actual for x in m],
     }
 
 
@@ -211,6 +224,8 @@ def build_payload() -> dict:
         "pipeline": pipeline_payload(a_central),
         "viability": viability_payload(a_central),
         "scenarios": {k: series(v) for k, v in runs.items()},
+        "market": {k: market_payload(v, market.calibrate_kappa(runs["central"]))
+                   for k, v in runs.items()},
         "scenario_desc": {
             k: (config.load().tree["scenarios"][k].get("description") or "").strip()
             for k in ("tight", "central", "loose")

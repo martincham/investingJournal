@@ -470,6 +470,23 @@
             </div>
 
             <div class="card">
+                <h2>Industry DRAM price and margin</h2>
+                <p class="note">
+                    Real 2025 dollars per GB. Starts at the observed 2026Q3
+                    price (revenue ÷ bits) and moves each quarter with the gap
+                    at the going price; one speed, set so 2026Q4 matches
+                    TrendForce's +15%. Dotted: the ceiling from cloud
+                    providers' DRAM budget (TrendForce: memory ≤68% of CSP
+                    capex). Margins are checked against, not fitted to,
+                    Micron's FY27 guide (86.25% floor, rising). A projection
+                    of pressure, not a price forecast; the scenario buttons
+                    above switch it too.
+                </p>
+                <div id="price" class="chart"></div>
+                <div id="margin" class="chart"></div>
+            </div>
+
+            <div class="card">
                 <h2>Stress the model</h2>
                 <p class="note">
                     One factor at a time, moved away from Central with
@@ -912,7 +929,7 @@
                 b.onclick = () => {
                   scenario = k;
                   box.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.textContent.toLowerCase() === k));
-                  drawDram(); drawNand();
+                  drawDram(); drawNand(); drawPrice();
                 };
                 box.appendChild(b);
               });
@@ -953,7 +970,25 @@
 
             function drawAll() {
               drawDram(); drawFleet(); drawPipeline(); drawBinding();
-              drawStack(); drawNand(); drawSliders(); drawTornado();
+              drawStack(); drawNand(); drawSliders(); drawTornado(); drawPrice();
+            }
+
+            function drawPrice() {
+              const m = D.market[scenario], q = m.quarters;
+              Plotly.react('price', [
+                {x:q, y:m.price, name:'Price', type:'scatter', mode:'lines',
+                 line:{color:css('--s1'), width:2}, hovertemplate:'$%{y:.2f}/GB<extra>price</extra>'},
+                {x:q, y:m.ceiling, name:'Budget ceiling', type:'scatter', mode:'lines',
+                 line:{color:css('--muted'), width:1.5, dash:'dot'}, hovertemplate:'$%{y:.2f}/GB<extra>ceiling</extra>'},
+              ], base({height:280, yaxis:{gridcolor:css('--grid'), tickprefix:'$',
+                  title:{text:'$ / GB (real 2025)', font:{size:12}}, zerolinecolor:css('--axis')},
+                  shapes:[DIVIDER()]}), CFG);
+              Plotly.react('margin', [
+                {x:q, y:m.gm, name:'Gross margin', type:'scatter', mode:'lines+markers', connectgaps:false,
+                 marker:{size:4}, line:{color:css('--s3'), width:2}, hovertemplate:'%{y:.1f}%<extra>gross margin</extra>'},
+              ], base({height:220, showlegend:false, yaxis:{gridcolor:css('--grid'), ticksuffix:'%',
+                  title:{text:'Gross margin', font:{size:12}}, zerolinecolor:css('--axis')},
+                  margin:{l:58,r:20,t:6,b:32}, shapes:[DIVIDER()]}), CFG);
             }
             fillHeadline();
             scenarioButtons(); buildSliders(); tables(); drawViability(); drawAll();

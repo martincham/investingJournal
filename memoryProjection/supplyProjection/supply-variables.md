@@ -42,12 +42,15 @@ and AI-usable-bit supply are different constraints.
 
 ## 2. Pinned vs projected
 
-<!-- var: actuals.actuals_end 2026=2026Q2 -->
-**`actuals.actuals_end` = 2026Q2.** Everything up to and including this quarter is
-observed, not modelled — the model still computes it (that's the backcast), but the
+<!-- var: actuals.actuals_end 2026=2026Q3 -->
+**`actuals.actuals_end` = 2026Q3** (2026Q2 in the July vintage). Everything up to and
+including this quarter is observed, not modelled. Nov 2026 caveat: 2026Q3 is derived from
+Samsung, SK hynix and Micron reports until TrendForce's ranking is out in December — the model still computes it (that's the backcast), but the
 reported line is the measured one. Confidence: high, it's a date, not an estimate.
 
-<!-- var: actuals.dram_supply_eb_per_quarter 2026Q1=10.0 2026Q2=10.8 -->
+<!-- var: actuals.dram_supply_eb_per_quarter 2026Q1=10.0 2026Q2=10.5 2026Q3=11.1 -->
+(Nov 2026: 2026Q2 revised 10.8 → 10.5 EB to match TrendForce's final revenue and its
+"only modest" bit growth; 2026Q3 = 11.1 EB from company reports.)
 **`actuals.dram_supply_eb_per_quarter`** — not published directly, so it's derived from
 two things that are: quarterly DRAM industry revenue and the blended ASP's QoQ change
 (`dram_blended_asp_qoq`), giving bits = revenue / ASP, level-anchored to ~39 EB for 2025.
@@ -60,19 +63,22 @@ supply wall looks like in the actual data, not in the model.
 
 ## 3. The wafer base: five producers, 2018–2032
 
-<!-- var: supply_capacity.dram_wafer_capacity_kwspm.samsung 2026=780 2032=1080 -->
-**Samsung**, 720 → 780 → 1,080 kWSPM. Confidence: medium — Samsung can shift P-line
+<!-- var: supply_capacity.dram_wafer_capacity_kwspm.samsung 2026=780 2032=1150 -->
+**Samsung**, 720 → 780 → 1,150 kWSPM (1,080 in July; raised for P5, which reaches 600k
+wpm of 300mm at full operation in 2029). Confidence: medium — Samsung can shift P-line
 capacity between foundry and DRAM, which makes its out-years the widest error bars of the
 big three; 2027–28 is P4/P5 Pyeongtaek, and beyond that is the model's assumption, not
 guidance.
 
-<!-- var: supply_capacity.dram_wafer_capacity_kwspm.sk_hynix 2026=620 2032=900 -->
-**SK Hynix**, 595 → 620 → 900 kWSPM. Confidence: medium, sourced to a guided ~600k/month
+<!-- var: supply_capacity.dram_wafer_capacity_kwspm.sk_hynix 2026=620 2032=1000 -->
+**SK Hynix**, 595 → 620 → 1,000 kWSPM (900 in July; 920 by 2030 haircuts its stated
+~1M wpm target, with Yongin Fab 1 tool-in moved up to Feb 2027). Confidence: medium, sourced to a guided ~600k/month
 figure for 2H2026. Highest HBM mix of any producer — M15X Cheongju is the near-term add,
 the Yongin cluster's first fab is 2027–28.
 
-<!-- var: supply_capacity.dram_wafer_capacity_kwspm.micron 2026=420 2032=720 -->
-**Micron**, 385 → 420 → 720 kWSPM. This is the shape that matters most in the whole wafer
+<!-- var: supply_capacity.dram_wafer_capacity_kwspm.micron 2026=420 2032=800 -->
+**Micron**, 385 → 420 → 800 kWSPM (720 in July; FY27 capex ~$55bn, double FY26, mostly
+cleanrooms online from late CY28). This is the shape that matters most in the whole wafer
 base: Micron adds almost nothing in 2026 (waiting on ID1) and its step-up is a 2027/28
 event — Boise ID1 then ID2, Hiroshima, with Clay NY not until 2030+. **The supply line
 cannot bend before late 2027 no matter what capex does, because this fab isn't ready
@@ -139,17 +145,20 @@ have exposed C2 almost immediately — the two ceilings are converging, not one 
 The four litho sub-variables that decide whether "ASML is the bottleneck" is actually
 true, rather than assumed:
 
-<!-- var: constraints.litho.euv_scanners_available_to_memory 2026=58 2032=152 -->
-**`euv_scanners_available_to_memory`** — cumulative EUV fleet in memory's hands, 58 → 152
-scanners. Confidence: low, assumed at ~30–35% of ASML's memory-relevant shipments,
-accumulating.
+<!-- var: constraints.litho.euv_scanners_available_to_memory 2026=70 2032=255 -->
+**`euv_scanners_available_to_memory`** — cumulative EUV fleet in memory's hands, 70 → 255
+scanners (58 → 152 in July). Confidence: low. Nov 2026: memory was ~46% of ASML's 3Q26
+system sales and ~65 low-NA tools shipped in 2026, so memory's adds are ~25–33/yr, not
+~14.
 
 <!-- var: constraints.litho.wafer_layers_per_scanner_month 2026=104000 2032=104000 -->
 **`wafer_layers_per_scanner_month`** — a scalar, 104,000, derived from ~160 wafers/hour ×
 24h × 30d × 90% uptime. Confidence: medium.
 
-<!-- var: constraints.litho.euv_layers_per_dram_wafer 2026=2 2032=6 -->
-**`euv_layers_per_dram_wafer`** — 2 → 6 layers. This is the term that decides whether C2
+<!-- var: constraints.litho.euv_layers_per_dram_wafer 2026=4 2032=8 -->
+**`euv_layers_per_dram_wafer`** — 4 → 8 layers (2 → 6 in July; 1b runs ~4 EUV layers and
+1c 5–6, so July was low by about the same factor as the scanner count, and the two were
+raised together). This is the term that decides whether C2
 ever binds at all: the scanner fleet grows roughly linearly while layers-per-wafer also
 grows, so the ceiling can flatten even as scanners keep arriving. Confidence: low.
 
@@ -166,8 +175,18 @@ increasingly so, and not until 2030.
 
 ## 6. Density: the trend that is the whole supply story
 
-<!-- var: tech_roadmap.dram_gb_per_wafer 2026=2260 2032=3135 -->
-**`dram_gb_per_wafer`** — 2,140 (2025) → 2,260 (2026) → 3,135 (2032), blended across the
+<!-- var: tech_roadmap.dram_gb_per_wafer 2026=2260 2032=3960 -->
+**November 2026 revision — this paragraph's July thesis was reversed.** The path is now
+2,260 (2026) → 2,620 (2027, +16%) → 3,960 (2032), about +8–11%/yr after 2027, against
+July's ~5%/yr. Three independent statements only fit together at ~+16% density in 2027:
+Micron's industry bit shipments "low-20s %" in CY27 and CY28, the SK hynix CEO's 2027
+wafers +12% with ex-HBM bits +15%, and supplier HBM volumes summing to ~7 EB in 2027.
+With the HBM wafer share rising 0.261 → 0.339, July's +5.5% gave total bits +14% and
+ex-HBM bits roughly flat. The 1b → 1c migration (SK hynix 1c ~35% of output by 1Q27),
+1d in 2027–28 and Samsung's 4F² from 2028 carry it. The July reasoning follows, kept as
+the earlier view.
+
+**July view: `dram_gb_per_wafer`** — 2,140 (2025) → 2,260 (2026) → 3,135 (2032), blended across the
 whole industry mix (DDR5, DDR4, LPDDR, GDDR, CXMT's older nodes), not leading-edge-only.
 The implied annual growth rate is the real story: **~11%/yr (2018–22) → ~10%/yr (2022–25)
 → ~5%/yr (2025–29) → ~6%/yr (2029–32)**. Planar DRAM's capacitor aspect ratio is running
@@ -210,8 +229,10 @@ assumption, and it's the **#2 tornado sensitivity**. This is a producer *allocat
 decision*, not a physical constraint — HBM has been the most profitable use of a wafer, so
 it can reverse in a quarter if that stops being true.
 
-<!-- var: tech_roadmap.hbm_trade_ratio 2026=2.85 2032=3.3 -->
-**`hbm_trade_ratio`** — **2.85 (2026) → 3.3 (2032)**: the wafer capacity one HBM bit costs
+<!-- var: tech_roadmap.hbm_trade_ratio 2026=2.85 2032=3.15 -->
+**`hbm_trade_ratio`** — **2.85 (2026) → 2.9 (2027) → 3.15 (2032)** (July: 3.05 in 2027,
+3.3 by 2032; TrendForce's own 2027 wafer and bit shares solve to ~2.87, 8-Hi stacks
+improve yield, and hybrid bonding slipped to HBM4E/HBM5): the wafer capacity one HBM bit costs
 versus one commodity DDR5 bit. This is the single highest-leverage number in the model,
 derived from two independent sourced ratios rather than guessed — HBM takes ~22% of wafer
 input but yields only ~9% of bits in 2026; solving that pair gives k=2.85, and a separate
@@ -242,23 +263,27 @@ commodity DRAM bit, and 16-hi HBM4 makes it worse. Confidence: low, but flagged 
 underrated gate — tester capacity (Advantest/Teradyne) is a real, purchasable thing the
 industry has repeatedly under-ordered.
 
-<!-- var: constraints.advanced_packaging.cowos_wafers_kwpm 2026=110 2032=330 -->
+<!-- var: constraints.advanced_packaging.cowos_wafers_kwpm 2026=110 2032=360 -->
 <!-- var: constraints.advanced_packaging.accelerators_per_cowos_wafer 2026=24 2032=15 -->
-**C6, `advanced_packaging.cowos_wafers_kwpm`** (110 → 330 kwpm of TSMC CoWoS) and
+**C6, `advanced_packaging.cowos_wafers_kwpm`** (110 → 360 kwpm of TSMC CoWoS; 330 in July,
+raised from 2028 as TSMC reportedly doubles CoWoS to ~260k by end-2028) and
 **`.accelerators_per_cowos_wafer`** (24 → 15, falling because packages keep getting
 physically bigger). Gates how much HBM can be *consumed* — a stack with no interposer to
 sit on is inventory, not supply. Combined with the seam variable below, this converts
 into a bits ceiling. Confidence: low on both; CoWoS is the most-watched number in the AI
 supply chain.
 
-<!-- var: demand_ai.hbm_gb_per_accelerator 2026=280 2032=880 -->
-**The seam: `demand_ai.hbm_gb_per_accelerator`** (280 → 880 GB/accelerator) belongs to the
+<!-- var: demand_ai.hbm_gb_per_accelerator 2026=280 2032=760 -->
+**The seam: `demand_ai.hbm_gb_per_accelerator`** (280 → 760 GB/accelerator; 880 in July,
+flattened after Rubin Ultra moved from the 1TB four-die design to ~384GB) belongs to the
 demand model but enters supply arithmetic directly — it's what converts CoWoS wafer
 throughput into an HBM *bits* ceiling (accelerators/wafer × GB/accelerator). Confidence:
 medium.
 
-None of C4, C5 or C6 ever actually binds: **`hbm_is_capped` is false in every quarter
-checked (2026, 2029, 2032) across every scenario.** In 2026, desired HBM output is ~1.12
+Nov 2026: C5 (test) now binds in 2032Q2–Q4 of the central case, the first HBM ceiling to
+bind anywhere, because the faster node cadence lifts desired HBM output into it. July
+view: none of C4, C5 or C6 ever actually binds: **`hbm_is_capped` is false in every
+quarter checked (2026, 2029, 2032) across every scenario.** In 2026, desired HBM output is ~1.12
 EB/quarter against ceilings of 1.31–2.35 EB/quarter (test is tightest, still ~17% of
 headroom above); by 2032 desired output of ~4.0 EB/quarter sits comfortably under a
 6.4–13.4 EB/quarter range. The model keeps these three ceilings in even though they never
@@ -293,9 +318,10 @@ scale wafer capacity 1,560 → 2,245 kWSPM (2026→2032):
 <!-- var: supply_capacity.nand_wafer_capacity_kwspm.sk_hynix_solidigm 2026=345 2032=490 -->
 <!-- var: supply_capacity.nand_wafer_capacity_kwspm.kioxia_sandisk 2026=405 2032=560 -->
 <!-- var: supply_capacity.nand_wafer_capacity_kwspm.micron 2026=195 2032=275 -->
-<!-- var: supply_capacity.nand_wafer_capacity_kwspm.ymtc 2026=155 2032=270 -->
+<!-- var: supply_capacity.nand_wafer_capacity_kwspm.ymtc 2026=200 2032=450 -->
 Samsung (480→650), SK Hynix/Solidigm (345→490), Kioxia/SanDisk (405→560, Kitakami K2 the
-main add), Micron (195→275), YMTC (155→270, also treated as captive-China). All
+main add), Micron (195→275), YMTC (200→450, also treated as captive-China; 155→270 in July, raised because YMTC already
+runs ~200k wpm with ~13–14% of NAND bits). All
 confidence: low — this granularity isn't separately reported the way DRAM's is.
 
 <!-- var: supply_capacity.utilisation.nand 2026=0.96 2032=0.95 -->
